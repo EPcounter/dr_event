@@ -160,23 +160,19 @@
   color: #ccc;
   white-space: nowrap;
 }
+    .status-upcoming {
+  color: #f5d76e; /* yellow */
+}
+.status-live {
+  color: #e74c3c; /* red */
+}
+.status-ended {
+  color: #999; /* gray */
+}
   </style>
 </head>
 <body>
-<div class="countdown-box">
-  <div class="title">📊 Event Info</div>
-  <div class="time-label">Event #: 2</div>
-  <div class="status-text">Peak Cost</div>
-  <div class="status-text">24-hour Notice</div>
-</div>
 
-<div class="countdown-box">
-  <div class="title">🎯 Target</div>
-  <div class="timer" style="margin-top: 14px;">
-    <div class="digit default">250</div>
-    <div class="digit seconds" style="min-width: auto;">MW</div>
-  </div>
-</div>
 
   <!-- Timeline -->
   <div class="timeline-box">
@@ -198,6 +194,24 @@
   </div>
 </div>
 
+
+  <div class="countdown-box">
+  <div class="title">📊 Event Info</div>
+  <div class="time-label">Event #: 2</div>
+  <div class="status-text">Peak Cost - 24 hr Notice</div>
+  <div class="status-text" id="event-status-tag">--</div>
+
+</div>
+
+<div class="countdown-box">
+  <div class="title">🎯 Target</div>
+  <div class="timer" style="margin-top: 14px;">
+    <div class="digit default">250</div>
+    <div class="digit seconds" style="min-width: auto;">MW</div>
+  </div>
+</div>
+
+  
 
   <!-- Countdown widgets -->
   <div class="widget-row">
@@ -381,6 +395,20 @@
       const marker = document.querySelector(".timeline-now-marker");
       marker.style.left = `${progressPercent}%`;
 
+      const statusTag = document.getElementById("event-status-tag");
+      if (now < eventStart) {
+        statusTag.textContent = "⏳ Upcoming";
+        statusTag.className = "status-text status-upcoming";
+      } else if (now >= eventStart && now < eventEnd) {
+        statusTag.textContent = "🔴 In Progress";
+        statusTag.className = "status-text status-live";
+      } else {
+        statusTag.textContent = "✅ Ended";
+        statusTag.className = "status-text status-ended";
+      }
+
+
+      
       // Label colors
       document.getElementById("label-standby").style.color = now > standbyTime ? "#777" : "#fff";
       document.getElementById("label-activation").style.color = now > activationTime ? "#777" : "#fff";
