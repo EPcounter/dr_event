@@ -195,14 +195,9 @@
   vertical-align: middle;
 }
 
-.dot-upcoming {
-  background-color: #f5d76e;
-  animation: blink 1s infinite;
-}
 
-.dot-live {
-  background-color: #2ecc71;
-}
+
+
 
 .dot-ended {
   display: inline-block;
@@ -216,7 +211,24 @@
   50%  { opacity: 0; }
   100% { opacity: 1; }
 }
+.dot-yellow {
+  background-color: #f5d76e; /* yellow */
+  animation: blink 1s infinite;
+}
 
+.dot-orange {
+  background-color: orange;
+  animation: blink 1s infinite;
+}
+
+.dot-red {
+  background-color: #e74c3c;
+  animation: blink 1s infinite;
+}
+    .dot-blue {
+  background-color: #3498db; /* blue */
+  animation: blink 1s infinite;
+}
     
   </style>
 </head>
@@ -447,19 +459,25 @@ marker.textContent = now >= eventEnd ? "END" : "NOW";
 
       const statusTag = document.getElementById("event-status-tag");
 
-if (now >= activationTime && now < eventStart) {
-  // Flashing yellow 🟠 after activation
-  statusTag.innerHTML = `🟠 Upcoming <span class="status-dot dot-upcoming"></span>`;
+if (now < standbyTime) {
+  // Before Standby
+  statusTag.innerHTML = `🔸 Planned <span class="status-dot dot-blue"></span>`;
   statusTag.className = "status-text status-upcoming";
-} else if (now < activationTime) {
-  // Just show ⏳ before activation
-  statusTag.innerHTML = `⏳ Upcoming`;
+} else if (now >= standbyTime && now < activationTime) {
+  // Between Standby and Activation
+  statusTag.innerHTML = `⏳ Upcoming <span class="status-dot dot-yellow"></span>`;
+  statusTag.className = "status-text status-upcoming";
+} else if (now >= activationTime && now < eventStart) {
+  // After Activation, before Event Start
+  statusTag.innerHTML = `🟠 Preparing <span class="status-dot dot-orange"></span>`;
   statusTag.className = "status-text status-upcoming";
 } else if (now >= eventStart && now < eventEnd) {
-  statusTag.innerHTML = `🔴 In Progress <span class="status-dot dot-live"></span>`;
+  // During Event
+  statusTag.innerHTML = `🔴 In Progress <span class="status-dot dot-red"></span>`;
   statusTag.className = "status-text status-live";
 } else {
-  statusTag.innerHTML = `✅ Ended <span class="status-dot dot-ended">✔</span>`;
+  // After Event
+  statusTag.innerHTML = `✅ Ended`;
   statusTag.className = "status-text status-ended";
 }
 
