@@ -169,6 +169,24 @@
 .status-ended {
   color: #999; /* gray */
 }
+.blinker {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background-color: #f5d76e;
+  animation: blink 1s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+    
   </style>
 </head>
 <body>
@@ -396,8 +414,8 @@
 
       const statusTag = document.getElementById("event-status-tag");
       if (now < eventStart) {
-        statusTag.textContent = "⏳ Upcoming";
-        statusTag.className = "status-text status-upcoming";
+      statusTag.textContent = "⏳ Upcoming";
+      statusTag.className = "status-text status-upcoming";
       } else if (now >= eventStart && now < eventEnd) {
         statusTag.textContent = "🔴 In Progress";
         statusTag.className = "status-text status-live";
