@@ -13,6 +13,7 @@
       display: flex;
       justify-content: center;
       gap: 20px;
+      flex-wrap: wrap;
     }
     .countdown-box {
       background: #f9f9f9;
@@ -55,7 +56,7 @@
       background: linear-gradient(to bottom, #444, #111);
     }
     .digit.active {
-      background: linear-gradient(to bottom, #f5d76e, #f39c12); /* Yellowish */
+      background: linear-gradient(to bottom, #f5d76e, #f39c12);
     }
     .digit.seconds {
       background: linear-gradient(to bottom, #eee, #ccc) !important;
@@ -65,6 +66,10 @@
       font-size: 22px;
       color: #ccc;
       padding: 0 2px;
+    }
+    .local-date, .next-refresh-time {
+      font-size: 14px;
+      color: #999;
     }
   </style>
 </head>
@@ -78,17 +83,24 @@
   </div>
 
   <div class="countdown-box">
-    <div class="title">📣 Activation Notice</div>
+    <div class="title">⚡ Activation Notice</div>
     <div class="time-label">June 30, 9:00 AM</div>
     <div id="activation-timer" class="timer"></div>
     <div id="activation-status" class="status-text"></div>
   </div>
 
   <div class="countdown-box">
-    <div class="title">⚡ Activation Event</div>
+    <div class="title">🔥 Activation Event</div>
     <div class="time-label">June 30, 6:00 PM – 10:00 PM</div>
     <div id="event-timer" class="timer"></div>
     <div id="event-status" class="status-text"></div>
+  </div>
+
+  <div class="countdown-box">
+    <div class="title">🕒 Current Time</div>
+    <div class="local-date" id="local-date">Loading...</div>
+    <div id="current-time" class="timer"></div>
+    <div class="next-refresh-time" id="next-refresh-text">Next update at --:-- (--:--)</div>
   </div>
 
   <script>
@@ -123,6 +135,32 @@
       `;
     }
 
+    function formatDate(date) {
+      const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+      return date.toLocaleDateString('en-US', options);
+    }
+
+    function formatAMPM(date) {
+      let hours = date.getHours();
+      let minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      return hours + ':' + minutes + ' ' + ampm;
+    }
+
+    function getNextRefreshTime(nowAbuDhabi) {
+      const next = new Date(nowAbuDhabi);
+      next.setMinutes(5);
+      next.setSeconds(0);
+      next.setMilliseconds(0);
+      if (nowAbuDhabi.getMinutes() >= 5) {
+        next.setHours(next.getHours() + 1);
+      }
+      return next;
+    }
+
     function updateCountdowns() {
       const now = getAbuDhabiNow();
 
@@ -132,28 +170,22 @@
       const eventEnd = new Date("2025-06-30T22:00:00+04:00");
 
       const times = [
-        { id: 'standby', label: 'Standby Notice', time: standbyTime, past: now >= standbyTime },
-        { id: 'activation', label: 'Activation Notice', time: activationTime, past: now >= activationTime },
-        { id: 'event', label: 'Activation Event', start: eventStart, end: eventEnd }
+        { id: 'standby', time: standbyTime, past: now >= standbyTime },
+        { id: 'activation', time: activationTime, past: now >= activationTime },
+        { id: 'event', time: eventStart, past: now >= eventEnd }
       ];
 
-      // Determine which is the next upcoming
-      const futureEvents = times
-        .filter(t => t.time && now < t.time)
-        .sort((a, b) => a.time - b.time);
+      const futureEvents = times.filter(t => now < t.time).sort((a, b) => a.time - b.time);
       const nextUpcomingId = futureEvents.length ? futureEvents[0].id : null;
 
-      // Render standby
       const sbParts = getCountdownParts(standbyTime - now);
       renderTimer("standby-timer", sbParts, nextUpcomingId === 'standby');
       document.getElementById("standby-status").textContent = now >= standbyTime ? "PAST" : "Starting in";
 
-      // Render activation
       const actParts = getCountdownParts(activationTime - now);
       renderTimer("activation-timer", actParts, nextUpcomingId === 'activation');
       document.getElementById("activation-status").textContent = now >= activationTime ? "PAST" : "Starting in";
 
-      // Render event
       let eventStatus = "";
       let eventParts;
       if (now < eventStart) {
@@ -168,6 +200,19 @@
       }
       renderTimer("event-timer", eventParts, nextUpcomingId === 'event');
       document.getElementById("event-status").textContent = eventStatus;
+
+      // Current time
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      const s = now.getSeconds().toString().padStart(2, '0');
+      document.getElementById('local-date').textContent = formatDate(now);
+      renderTimer("current-time", { h, m, s }, false);
+
+      // Refresh info
+      const nextRefresh = getNextRefreshTime(now);
+      const diff = nextRefresh - now;
+      const cd = getCountdownParts(diff);
+      document.getElementById("next-refresh-text").textContent = `Next update at ${formatAMPM(nextRefresh)} (${cd.h}:${cd.m}:${cd.s})`;
     }
 
     setInterval(updateCountdowns, 1000);
