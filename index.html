@@ -95,9 +95,62 @@
     .box-past .time-label {
       color: #999 !important;
     }
+    .timeline-box {
+  width: 100%;
+  max-width: 700px;
+  margin-top: 10px;
+  text-align: center;
+}
+.timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 4px;
+  padding: 0 8px;
+  color: #666;
+}
+.timeline-track {
+  position: relative;
+  height: 6px;
+  background: #ddd;
+  border-radius: 4px;
+  margin: 0 8px;
+}
+#timeline-progress {
+  position: absolute;
+  height: 6px;
+  background: #f39c12;
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.5s ease;
+}
+.timeline-now-marker {
+  position: absolute;
+  top: -14px;
+  font-size: 10px;
+  background: #444;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 3px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
   </style>
 </head>
 <body>
+<div class="timeline-box">
+  <div class="timeline-labels">
+    <span id="label-standby">📣 Standby</span>
+    <span id="label-activation">⚡ Activation</span>
+    <span id="label-event">🔥 Event</span>
+    <span id="label-end">✅ End</span>
+  </div>
+  <div class="timeline-track">
+    <div id="timeline-progress"></div>
+    <div class="timeline-now-marker">NOW</div>
+  </div>
+</div>
 
   <div class="countdown-box" id="standby-box">
     <div class="title">📣 Standby Notice</div>
@@ -187,79 +240,93 @@
     }
 
     function updateCountdowns() {
-      const now = getAbuDhabiNow();
+  const now = getAbuDhabiNow();
 
-      const standbyTime = new Date("2025-06-29T18:00:00+04:00");
-      const activationTime = new Date("2025-06-30T09:00:00+04:00");
-      const eventStart = new Date("2025-06-30T18:00:00+04:00");
-      const eventEnd = new Date("2025-06-30T22:00:00+04:00");
+  const standbyTime = new Date("2025-06-29T18:00:00+04:00");
+  const activationTime = new Date("2025-06-30T09:00:00+04:00");
+  const eventStart = new Date("2025-06-30T18:00:00+04:00");
+  const eventEnd = new Date("2025-06-30T22:00:00+04:00");
 
-      // Determine what's next
-      const times = [
-        { id: 'standby', time: standbyTime },
-        { id: 'activation', time: activationTime },
-        { id: 'event', time: eventStart }
-      ];
-      const futureEvents = times.filter(t => now < t.time).sort((a, b) => a.time - b.time);
-      const nextUpcomingId = futureEvents.length ? futureEvents[0].id : null;
+  const times = [
+    { id: 'standby', time: standbyTime },
+    { id: 'activation', time: activationTime },
+    { id: 'event', time: eventStart }
+  ];
+  const futureEvents = times.filter(t => now < t.time).sort((a, b) => a.time - b.time);
+  const nextUpcomingId = futureEvents.length ? futureEvents[0].id : null;
 
-      // Clear box classes
-      ['standby', 'activation', 'event'].forEach(id => {
-        const box = document.getElementById(`${id}-box`);
-        box.classList.remove('box-up-next', 'box-past');
-      });
+  // Clear box classes
+  ['standby', 'activation', 'event'].forEach(id => {
+    const box = document.getElementById(`${id}-box`);
+    box.classList.remove('box-up-next', 'box-past');
+  });
 
-      // Standby
-      const sbBox = document.getElementById("standby-box");
-      const sbParts = getCountdownParts(standbyTime - now);
-      renderTimer("standby-timer", sbParts, nextUpcomingId === 'standby');
-      document.getElementById("standby-status").textContent = now >= standbyTime ? "PAST" : "Starting in";
-      if (now >= standbyTime) sbBox.classList.add("box-past");
-      if (nextUpcomingId === 'standby') sbBox.classList.add("box-up-next");
+  // Standby
+  const sbBox = document.getElementById("standby-box");
+  const sbParts = getCountdownParts(standbyTime - now);
+  renderTimer("standby-timer", sbParts, nextUpcomingId === 'standby');
+  document.getElementById("standby-status").textContent = now >= standbyTime ? "PAST" : "Starting in";
+  if (now >= standbyTime) sbBox.classList.add("box-past");
+  if (nextUpcomingId === 'standby') sbBox.classList.add("box-up-next");
 
-      // Activation
-      const actBox = document.getElementById("activation-box");
-      const actParts = getCountdownParts(activationTime - now);
-      renderTimer("activation-timer", actParts, nextUpcomingId === 'activation');
-      document.getElementById("activation-status").textContent = now >= activationTime ? "PAST" : "Starting in";
-      if (now >= activationTime) actBox.classList.add("box-past");
-      if (nextUpcomingId === 'activation') actBox.classList.add("box-up-next");
+  // Activation
+  const actBox = document.getElementById("activation-box");
+  const actParts = getCountdownParts(activationTime - now);
+  renderTimer("activation-timer", actParts, nextUpcomingId === 'activation');
+  document.getElementById("activation-status").textContent = now >= activationTime ? "PAST" : "Starting in";
+  if (now >= activationTime) actBox.classList.add("box-past");
+  if (nextUpcomingId === 'activation') actBox.classList.add("box-up-next");
 
-      // Event
-      const evBox = document.getElementById("event-box");
-      const liveLabel = document.getElementById("live-label");
-      let eventStatus = "", eventParts;
-      if (now < eventStart) {
-        eventParts = getCountdownParts(eventStart - now);
-        eventStatus = "Starting in";
-        liveLabel.style.display = "none";
-      } else if (now >= eventStart && now < eventEnd) {
-        eventParts = getCountdownParts(eventEnd - now);
-        eventStatus = "Ending in";
-        liveLabel.style.display = "inline-block";
-      } else {
-        eventParts = getCountdownParts(0);
-        eventStatus = "ENDED";
-        liveLabel.style.display = "none";
-      }
-      renderTimer("event-timer", eventParts, nextUpcomingId === 'event');
-      document.getElementById("event-status").textContent = eventStatus;
-      if (now >= eventEnd) evBox.classList.add("box-past");
-      if (nextUpcomingId === 'event') evBox.classList.add("box-up-next");
+  // Event
+  const evBox = document.getElementById("event-box");
+  const liveLabel = document.getElementById("live-label");
+  let eventStatus = "", eventParts;
+  if (now < eventStart) {
+    eventParts = getCountdownParts(eventStart - now);
+    eventStatus = "Starting in";
+    liveLabel.style.display = "none";
+  } else if (now >= eventStart && now < eventEnd) {
+    eventParts = getCountdownParts(eventEnd - now);
+    eventStatus = "Ending in";
+    liveLabel.style.display = "inline-block";
+  } else {
+    eventParts = getCountdownParts(0);
+    eventStatus = "ENDED";
+    liveLabel.style.display = "none";
+  }
+  renderTimer("event-timer", eventParts, nextUpcomingId === 'event');
+  document.getElementById("event-status").textContent = eventStatus;
+  if (now >= eventEnd) evBox.classList.add("box-past");
+  if (nextUpcomingId === 'event') evBox.classList.add("box-up-next");
 
-      // Current time
-      const h = now.getHours().toString().padStart(2, '0');
-      const m = now.getMinutes().toString().padStart(2, '0');
-      const s = now.getSeconds().toString().padStart(2, '0');
-      document.getElementById('local-date').textContent = formatDate(now);
-      renderTimer("current-time", { h, m, s }, false);
+  // Current time box
+  const h = now.getHours().toString().padStart(2, '0');
+  const m = now.getMinutes().toString().padStart(2, '0');
+  const s = now.getSeconds().toString().padStart(2, '0');
+  document.getElementById('local-date').textContent = formatDate(now);
+  renderTimer("current-time", { h, m, s }, false);
 
-      // Refresh info
-      const nextRefresh = getNextRefreshTime(now);
-      const diff = nextRefresh - now;
-      const cd = getCountdownParts(diff);
-      document.getElementById("next-refresh-text").textContent = `Next update at ${formatAMPM(nextRefresh)} (${cd.h}:${cd.m}:${cd.s})`;
-    }
+  // Next update
+  const nextRefresh = getNextRefreshTime(now);
+  const diff = nextRefresh - now;
+  const cd = getCountdownParts(diff);
+  document.getElementById("next-refresh-text").textContent = `Next update at ${formatAMPM(nextRefresh)} (${cd.h}:${cd.m}:${cd.s})`;
+
+  // 🔁 Timeline Progress
+  const totalDuration = eventEnd - standbyTime;
+  const timeElapsed = now - standbyTime;
+  const progressPercent = Math.min(100, Math.max(0, (timeElapsed / totalDuration) * 100));
+  document.getElementById("timeline-progress").style.width = `${progressPercent}%`;
+
+  const marker = document.querySelector(".timeline-now-marker");
+  marker.style.left = `${progressPercent}%`;
+
+  // Optional color cues
+  document.getElementById("label-standby").style.color = now > standbyTime ? "#888" : "#000";
+  document.getElementById("label-activation").style.color = now > activationTime ? "#888" : "#000";
+  document.getElementById("label-event").style.color = now > eventStart ? (now < eventEnd ? "red" : "#888") : "#000";
+  document.getElementById("label-end").style.color = now > eventEnd ? "#000" : "#888";
+}
 
     setInterval(updateCountdowns, 1000);
     updateCountdowns();
