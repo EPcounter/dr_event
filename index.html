@@ -4,98 +4,121 @@
   <title>DR Event Countdown</title>
   <meta charset="UTF-8">
   <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
- <style>
-  body {
-    margin: 0;
-    padding: 8px;
-    background: transparent;
-    font-family: 'Open Sans', Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .countdown-box {
-    background: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 6px;
-    text-align: center;
-    width: 160px;
-    box-shadow: 0 0 4px rgba(0,0,0,0.1);
-  }
-  .title {
-    font-size: 13px;
-    font-weight: bold;
-    margin-bottom: 4px;
-  }
-  .time-label {
-    font-size: 12px;
-    color: #555;
-    margin-bottom: 6px;
-  }
-  .status-text {
-    font-size: 12px;
-    margin-top: 6px;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-  .timer {
-    display: flex;
-    justify-content: center;
-    gap: 2px;
-  }
-  .digit {
-    font-size: 16px;
-    color: #fff;
-    padding: 3px 4px;
-    border-radius: 4px;
-    min-width: 28px;
-  }
-  .digit.default {
-    background: linear-gradient(to bottom, #444, #111);
-  }
-  .digit.active {
-    background: linear-gradient(to bottom, #f5d76e, #f39c12);
-  }
-  .digit.seconds {
-    background: linear-gradient(to bottom, #eee, #ccc) !important;
-    color: #333 !important;
-  }
-  .separator {
-    font-size: 16px;
-    color: #ccc;
-    padding: 0 1px;
-  }
-  .local-date, .next-refresh-time {
-    font-size: 11px;
-    color: #999;
-  }
-</style>
+  <style>
+    body {
+      margin: 0;
+      padding: 8px;
+      background: transparent;
+      font-family: 'Open Sans', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .countdown-box {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 6px;
+      text-align: center;
+      width: 160px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.1);
+    }
+    .title {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .time-label {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .status-text {
+      font-size: 12px;
+      margin-top: 6px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .live-label {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      color: white;
+      background-color: red;
+      border-radius: 4px;
+    }
+    .timer {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+    }
+    .digit {
+      font-size: 16px;
+      color: #fff;
+      padding: 3px 4px;
+      border-radius: 4px;
+      min-width: 28px;
+    }
+    .digit.default {
+      background: linear-gradient(to bottom, #444, #111);
+    }
+    .digit.active {
+      background: linear-gradient(to bottom, #f5d76e, #f39c12);
+    }
+    .digit.seconds {
+      background: linear-gradient(to bottom, #eee, #ccc) !important;
+      color: #333 !important;
+    }
+    .separator {
+      font-size: 16px;
+      color: #ccc;
+      padding: 0 1px;
+    }
+    .local-date, .next-refresh-time {
+      font-size: 11px;
+      color: #999;
+    }
 
-
+    .box-up-next {
+      background: #fff9e6 !important;
+      border: 1px solid #f4d03f !important;
+    }
+    .box-past {
+      background: #f1f1f1 !important;
+      color: #999 !important;
+    }
+    .box-past .title,
+    .box-past .status-text,
+    .box-past .time-label {
+      color: #999 !important;
+    }
+  </style>
 </head>
 <body>
 
-  <div class="countdown-box">
+  <div class="countdown-box" id="standby-box">
     <div class="title">📣 Standby Notice</div>
     <div class="time-label">June 29, 6:00 PM</div>
     <div id="standby-timer" class="timer"></div>
     <div id="standby-status" class="status-text"></div>
   </div>
 
-  <div class="countdown-box">
+  <div class="countdown-box" id="activation-box">
     <div class="title">⚡ Activation Notice</div>
     <div class="time-label">June 30, 9:00 AM</div>
     <div id="activation-timer" class="timer"></div>
     <div id="activation-status" class="status-text"></div>
   </div>
 
-  <div class="countdown-box">
+  <div class="countdown-box" id="event-box">
     <div class="title">🔥 Activation Event</div>
     <div class="time-label">June 30, 6:00 PM – 10:00 PM</div>
     <div id="event-timer" class="timer"></div>
     <div id="event-status" class="status-text"></div>
+    <div id="live-label" class="live-label" style="display: none;">LIVE</div>
   </div>
 
   <div class="countdown-box">
@@ -171,37 +194,58 @@
       const eventStart = new Date("2025-06-30T18:00:00+04:00");
       const eventEnd = new Date("2025-06-30T22:00:00+04:00");
 
+      // Determine what's next
       const times = [
-        { id: 'standby', time: standbyTime, past: now >= standbyTime },
-        { id: 'activation', time: activationTime, past: now >= activationTime },
-        { id: 'event', time: eventStart, past: now >= eventEnd }
+        { id: 'standby', time: standbyTime },
+        { id: 'activation', time: activationTime },
+        { id: 'event', time: eventStart }
       ];
-
       const futureEvents = times.filter(t => now < t.time).sort((a, b) => a.time - b.time);
       const nextUpcomingId = futureEvents.length ? futureEvents[0].id : null;
 
+      // Clear box classes
+      ['standby', 'activation', 'event'].forEach(id => {
+        const box = document.getElementById(`${id}-box`);
+        box.classList.remove('box-up-next', 'box-past');
+      });
+
+      // Standby
+      const sbBox = document.getElementById("standby-box");
       const sbParts = getCountdownParts(standbyTime - now);
       renderTimer("standby-timer", sbParts, nextUpcomingId === 'standby');
       document.getElementById("standby-status").textContent = now >= standbyTime ? "PAST" : "Starting in";
+      if (now >= standbyTime) sbBox.classList.add("box-past");
+      if (nextUpcomingId === 'standby') sbBox.classList.add("box-up-next");
 
+      // Activation
+      const actBox = document.getElementById("activation-box");
       const actParts = getCountdownParts(activationTime - now);
       renderTimer("activation-timer", actParts, nextUpcomingId === 'activation');
       document.getElementById("activation-status").textContent = now >= activationTime ? "PAST" : "Starting in";
+      if (now >= activationTime) actBox.classList.add("box-past");
+      if (nextUpcomingId === 'activation') actBox.classList.add("box-up-next");
 
-      let eventStatus = "";
-      let eventParts;
+      // Event
+      const evBox = document.getElementById("event-box");
+      const liveLabel = document.getElementById("live-label");
+      let eventStatus = "", eventParts;
       if (now < eventStart) {
         eventParts = getCountdownParts(eventStart - now);
         eventStatus = "Starting in";
+        liveLabel.style.display = "none";
       } else if (now >= eventStart && now < eventEnd) {
         eventParts = getCountdownParts(eventEnd - now);
         eventStatus = "Ending in";
+        liveLabel.style.display = "inline-block";
       } else {
         eventParts = getCountdownParts(0);
         eventStatus = "ENDED";
+        liveLabel.style.display = "none";
       }
       renderTimer("event-timer", eventParts, nextUpcomingId === 'event');
       document.getElementById("event-status").textContent = eventStatus;
+      if (now >= eventEnd) evBox.classList.add("box-past");
+      if (nextUpcomingId === 'event') evBox.classList.add("box-up-next");
 
       // Current time
       const h = now.getHours().toString().padStart(2, '0');
