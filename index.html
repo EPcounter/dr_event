@@ -152,23 +152,38 @@
   font-weight: bold;
   text-transform: uppercase;
 }
+    .timeline-tick {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #ccc;
+  white-space: nowrap;
+}
   </style>
 </head>
 <body>
 
   <!-- Timeline -->
   <div class="timeline-box">
-    <div class="timeline-labels">
-      <span id="label-standby">📣 Standby</span>
-      <span id="label-activation">⚡ Activation</span>
-      <span id="label-event">🔥 Event</span>
-      <span id="label-end">✅ End</span>
-    </div>
-    <div class="timeline-track">
-      <div id="timeline-progress"></div>
-      <div class="timeline-now-marker">NOW</div>
-    </div>
+  <div class="timeline-labels">
+    <span id="label-standby">📣 Standby</span>
+    <span id="label-activation">⚡ Activation</span>
+    <span id="label-event">🔥 Event</span>
+    <span id="label-end">✅ End</span>
   </div>
+  <div class="timeline-track">
+    <div id="timeline-progress"></div>
+    <div class="timeline-now-marker">NOW</div>
+
+    <!-- Tick markers -->
+    <div class="timeline-tick" style="left: 0%;"><span id="tick-time-standby">--</span></div>
+    <div class="timeline-tick" style="left: 33.3%;"><span id="tick-time-activation">--</span></div>
+    <div class="timeline-tick" style="left: 66.6%;"><span id="tick-time-event">--</span></div>
+    <div class="timeline-tick" style="left: 100%;"><span id="tick-time-end">--</span></div>
+  </div>
+</div>
+
 
   <!-- Countdown widgets -->
   <div class="widget-row">
@@ -269,6 +284,12 @@
       const eventStart = new Date("2025-06-30T18:00:00+04:00");
       const eventEnd = new Date("2025-06-30T22:00:00+04:00");
 
+      document.getElementById("tick-time-standby").textContent = standbyTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    document.getElementById("tick-time-activation").textContent = activationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    document.getElementById("tick-time-event").textContent = eventStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    document.getElementById("tick-time-end").textContent = eventEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    
+
       const times = [
         { id: 'standby', time: standbyTime },
         { id: 'activation', time: activationTime },
@@ -277,6 +298,9 @@
       const futureEvents = times.filter(t => now < t.time).sort((a, b) => a.time - b.time);
       const nextUpcomingId = futureEvents.length ? futureEvents[0].id : null;
 
+
+
+      
       // Clear classes
       ['standby', 'activation', 'event'].forEach(id => {
         const box = document.getElementById(`${id}-box`);
