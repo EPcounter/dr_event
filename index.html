@@ -186,6 +186,37 @@
   100% { opacity: 1; }
 }
 
+    .status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.dot-upcoming {
+  background-color: #f5d76e;
+  animation: blink 1s infinite;
+}
+
+.dot-live {
+  background-color: #2ecc71;
+}
+
+.dot-ended {
+  display: inline-block;
+  font-size: 12px;
+  margin-left: 6px;
+  color: #bbb;
+}
+
+@keyframes blink {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
     
   </style>
 </head>
@@ -413,16 +444,17 @@
       marker.style.left = `${progressPercent}%`;
 
       const statusTag = document.getElementById("event-status-tag");
-      if (now < eventStart) {
-      statusTag.textContent = "⏳ Upcoming";
-      statusTag.className = "status-text status-upcoming";
-      } else if (now >= eventStart && now < eventEnd) {
-        statusTag.textContent = "🔴 In Progress";
-        statusTag.className = "status-text status-live";
-      } else {
-        statusTag.textContent = "✅ Ended";
-        statusTag.className = "status-text status-ended";
-      }
+
+if (now < eventStart) {
+  statusTag.innerHTML = `⏳ Upcoming <span class="status-dot dot-upcoming"></span>`;
+  statusTag.className = "status-text status-upcoming";
+} else if (now >= eventStart && now < eventEnd) {
+  statusTag.innerHTML = `🔴 In Progress <span class="status-dot dot-live"></span>`;
+  statusTag.className = "status-text status-live";
+} else {
+  statusTag.innerHTML = `✅ Ended <span class="status-dot dot-ended">✔</span>`;
+  statusTag.className = "status-text status-ended";
+}
 
 
       
