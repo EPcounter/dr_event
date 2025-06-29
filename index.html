@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -36,8 +35,9 @@
     }
     .status-text {
       font-size: 14px;
-      color: #888;
       margin-top: 8px;
+      font-weight: bold;
+      text-transform: uppercase;
     }
     .timer {
       display: flex;
@@ -46,11 +46,20 @@
     }
     .digit {
       font-size: 22px;
-      background: linear-gradient(to bottom, #444, #111);
       color: #fff;
       padding: 4px 10px;
       border-radius: 5px;
       min-width: 36px;
+    }
+    .digit.default {
+      background: linear-gradient(to bottom, #444, #111);
+    }
+    .digit.active {
+      background: linear-gradient(to bottom, #f5d76e, #f39c12); /* Yellowish */
+    }
+    .digit.seconds {
+      background: linear-gradient(to bottom, #eee, #ccc) !important;
+      color: #333 !important;
     }
     .separator {
       font-size: 22px;
@@ -69,21 +78,21 @@
   </div>
 
   <div class="countdown-box">
-    <div class="title">⚡ Activation Notice</div>
+    <div class="title">📣 Activation Notice</div>
     <div class="time-label">June 30, 9:00 AM</div>
     <div id="activation-timer" class="timer"></div>
     <div id="activation-status" class="status-text"></div>
   </div>
 
   <div class="countdown-box">
-    <div class="title">🔥 Activation Event</div>
+    <div class="title">⚡ Activation Event</div>
     <div class="time-label">June 30, 6:00 PM – 10:00 PM</div>
     <div id="event-timer" class="timer"></div>
     <div id="event-status" class="status-text"></div>
   </div>
 
   <script>
-    const abuDhabiOffset = 4 * 60; // UTC+4
+    const abuDhabiOffset = 4 * 60;
 
     function getAbuDhabiNow() {
       const now = new Date();
@@ -92,7 +101,7 @@
     }
 
     function getCountdownParts(diffMs) {
-      const totalSeconds = Math.floor(diffMs / 1000);
+      const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = totalSeconds % 60;
@@ -103,6 +112,17 @@
       };
     }
 
+    function renderTimer(containerId, parts, isActive) {
+      const digitClass = isActive ? 'digit active' : 'digit default';
+      document.getElementById(containerId).innerHTML = `
+        <div class="${digitClass}">${parts.h}</div>
+        <div class="separator">:</div>
+        <div class="${digitClass}">${parts.m}</div>
+        <div class="separator">:</div>
+        <div class="digit seconds">${parts.s}</div>
+      `;
+    }
+
     function updateCountdowns() {
       const now = getAbuDhabiNow();
 
@@ -111,49 +131,43 @@
       const eventStart = new Date("2025-06-30T18:00:00+04:00");
       const eventEnd = new Date("2025-06-30T22:00:00+04:00");
 
-      function renderTimer(containerId, parts) {
-        document.getElementById(containerId).innerHTML = `
-          <div class="digit">${parts.h}</div>
-          <div class="separator">:</div>
-          <div class="digit">${parts.m}</div>
-          <div class="separator">:</div>
-          <div class="digit">${parts.s}</div>
-        `;
-      }
+      const times = [
+        { id: 'standby', label: 'Standby Notice', time: standbyTime, past: now >= standbyTime },
+        { id: 'activation', label: 'Activation Notice', time: activationTime, past: now >= activationTime },
+        { id: 'event', label: 'Activation Event', start: eventStart, end: eventEnd }
+      ];
 
-      // Standby Notice
-      if (now < standbyTime) {
-        const parts = getCountdownParts(standbyTime - now);
-        renderTimer("standby-timer", parts);
-        document.getElementById("standby-status").textContent = "Starting in";
-      } else {
-        document.getElementById("standby-timer").innerHTML = "";
-        document.getElementById("standby-status").textContent = "Past";
-      }
+      // Determine which is the next upcoming
+      const futureEvents = times
+        .filter(t => t.time && now < t.time)
+        .sort((a, b) => a.time - b.time);
+      const nextUpcomingId = futureEvents.length ? futureEvents[0].id : null;
 
-      // Activation Notice
-      if (now < activationTime) {
-        const parts = getCountdownParts(activationTime - now);
-        renderTimer("activation-timer", parts);
-        document.getElementById("activation-status").textContent = "Starting in";
-      } else {
-        document.getElementById("activation-timer").innerHTML = "";
-        document.getElementById("activation-status").textContent = "Past";
-      }
+      // Render standby
+      const sbParts = getCountdownParts(standbyTime - now);
+      renderTimer("standby-timer", sbParts, nextUpcomingId === 'standby');
+      document.getElementById("standby-status").textContent = now >= standbyTime ? "PAST" : "Starting in";
 
-      // Activation Event
+      // Render activation
+      const actParts = getCountdownParts(activationTime - now);
+      renderTimer("activation-timer", actParts, nextUpcomingId === 'activation');
+      document.getElementById("activation-status").textContent = now >= activationTime ? "PAST" : "Starting in";
+
+      // Render event
+      let eventStatus = "";
+      let eventParts;
       if (now < eventStart) {
-        const parts = getCountdownParts(eventStart - now);
-        renderTimer("event-timer", parts);
-        document.getElementById("event-status").textContent = "Starting in";
+        eventParts = getCountdownParts(eventStart - now);
+        eventStatus = "Starting in";
       } else if (now >= eventStart && now < eventEnd) {
-        const parts = getCountdownParts(eventEnd - now);
-        renderTimer("event-timer", parts);
-        document.getElementById("event-status").textContent = "Ending in";
+        eventParts = getCountdownParts(eventEnd - now);
+        eventStatus = "Ending in";
       } else {
-        document.getElementById("event-timer").innerHTML = "";
-        document.getElementById("event-status").textContent = "Ended";
+        eventParts = getCountdownParts(0);
+        eventStatus = "ENDED";
       }
+      renderTimer("event-timer", eventParts, nextUpcomingId === 'event');
+      document.getElementById("event-status").textContent = eventStatus;
     }
 
     setInterval(updateCountdowns, 1000);
