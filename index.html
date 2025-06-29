@@ -1,1 +1,163 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DR Event Countdown</title>
+  <meta charset="UTF-8">
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: transparent;
+      font-family: 'Open Sans', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .countdown-box {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      width: 220px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    .title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .time-label {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    .status-text {
+      font-size: 14px;
+      color: #888;
+      margin-top: 8px;
+    }
+    .timer {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+    }
+    .digit {
+      font-size: 22px;
+      background: linear-gradient(to bottom, #444, #111);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 5px;
+      min-width: 36px;
+    }
+    .separator {
+      font-size: 22px;
+      color: #ccc;
+      padding: 0 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="countdown-box">
+    <div class="title">📣 Standby Notice</div>
+    <div class="time-label">June 29, 6:00 PM</div>
+    <div id="standby-timer" class="timer"></div>
+    <div id="standby-status" class="status-text"></div>
+  </div>
+
+  <div class="countdown-box">
+    <div class="title">⚡ Activation Notice</div>
+    <div class="time-label">June 30, 9:00 AM</div>
+    <div id="activation-timer" class="timer"></div>
+    <div id="activation-status" class="status-text"></div>
+  </div>
+
+  <div class="countdown-box">
+    <div class="title">🔥 Activation Event</div>
+    <div class="time-label">June 30, 6:00 PM – 10:00 PM</div>
+    <div id="event-timer" class="timer"></div>
+    <div id="event-status" class="status-text"></div>
+  </div>
+
+  <script>
+    const abuDhabiOffset = 4 * 60; // UTC+4
+
+    function getAbuDhabiNow() {
+      const now = new Date();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      return new Date(utc + abuDhabiOffset * 60000);
+    }
+
+    function getCountdownParts(diffMs) {
+      const totalSeconds = Math.floor(diffMs / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return {
+        h: hours.toString().padStart(2, '0'),
+        m: minutes.toString().padStart(2, '0'),
+        s: seconds.toString().padStart(2, '0')
+      };
+    }
+
+    function updateCountdowns() {
+      const now = getAbuDhabiNow();
+
+      const standbyTime = new Date("2025-06-29T18:00:00+04:00");
+      const activationTime = new Date("2025-06-30T09:00:00+04:00");
+      const eventStart = new Date("2025-06-30T18:00:00+04:00");
+      const eventEnd = new Date("2025-06-30T22:00:00+04:00");
+
+      function renderTimer(containerId, parts) {
+        document.getElementById(containerId).innerHTML = `
+          <div class="digit">${parts.h}</div>
+          <div class="separator">:</div>
+          <div class="digit">${parts.m}</div>
+          <div class="separator">:</div>
+          <div class="digit">${parts.s}</div>
+        `;
+      }
+
+      // Standby Notice
+      if (now < standbyTime) {
+        const parts = getCountdownParts(standbyTime - now);
+        renderTimer("standby-timer", parts);
+        document.getElementById("standby-status").textContent = "Starting in";
+      } else {
+        document.getElementById("standby-timer").innerHTML = "";
+        document.getElementById("standby-status").textContent = "Past";
+      }
+
+      // Activation Notice
+      if (now < activationTime) {
+        const parts = getCountdownParts(activationTime - now);
+        renderTimer("activation-timer", parts);
+        document.getElementById("activation-status").textContent = "Starting in";
+      } else {
+        document.getElementById("activation-timer").innerHTML = "";
+        document.getElementById("activation-status").textContent = "Past";
+      }
+
+      // Activation Event
+      if (now < eventStart) {
+        const parts = getCountdownParts(eventStart - now);
+        renderTimer("event-timer", parts);
+        document.getElementById("event-status").textContent = "Starting in";
+      } else if (now >= eventStart && now < eventEnd) {
+        const parts = getCountdownParts(eventEnd - now);
+        renderTimer("event-timer", parts);
+        document.getElementById("event-status").textContent = "Ending in";
+      } else {
+        document.getElementById("event-timer").innerHTML = "";
+        document.getElementById("event-status").textContent = "Ended";
+      }
+    }
+
+    setInterval(updateCountdowns, 1000);
+    updateCountdowns();
+  </script>
+</body>
+</html>
