@@ -437,8 +437,7 @@ document.getElementById("label-event").style.left = `${(eventStartPercent + even
 
     
       // Event window shading
-      const eventStartPercent = ((eventStart - timelineStart) / timelineDuration) * 100;
-      const eventEndPercent = ((eventEnd - timelineStart) / timelineDuration) * 100;
+      
       const shade = document.getElementById("event-window-shade");
       shade.style.left = `${eventStartPercent}%`;
       shade.style.width = `${eventEndPercent - eventStartPercent}%`;
