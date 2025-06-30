@@ -452,6 +452,7 @@ document.getElementById("tick-time-finish").textContent = timelineEnd.toLocaleTi
 
   // Tick positions
 // Position each tick along the timeline
+    const ticks = document.querySelectorAll(".timeline-tick");
 ticks[0].style.left = `0%`; // Start of timeline
 ticks[1].style.left = `${percentOfTimeline(standbyTime)}%`;
 ticks[2].style.left = `${percentOfTimeline(activationTime)}%`;
