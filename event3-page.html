@@ -22,14 +22,19 @@
       max-width: 1400px;
       text-align: center;
     }
-    .timeline-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      margin-bottom: 4px;
-      padding: 0 8px;
-      color: #fff;
-    }
+.timeline-labels {
+  position: relative;
+  height: 20px;
+  margin-bottom: 4px;
+}
+
+.timeline-labels span {
+  position: absolute;
+  font-size: 12px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: #fff;
+}
     .timeline-track {
       position: relative;
       height: 6px;
@@ -270,7 +275,6 @@
     <span id="label-standby">📣 Standby</span>
     <span id="label-activation">📣 Activation</span>
     <span id="label-event">⚡ Event</span>
-    <span id="label-end">✅ End</span>
   </div>
   <div class="timeline-track">
       <div id="standby-activation-shade"></div>
@@ -420,6 +424,10 @@ const standbyActivationShade = document.getElementById("standby-activation-shade
 standbyActivationShade.style.left = `${standbyStartPercent}%`;
 standbyActivationShade.style.width = `${activationEndPercent - standbyStartPercent}%`;
 
+ // Center each label above its shaded area
+document.getElementById("label-standby").style.left = `${(standbyStartPercent + activationEndPercent) / 2}%`;
+document.getElementById("label-activation").style.left = `${(activationStartPercent + eventStartPercentForShade) / 2}%`;
+document.getElementById("label-event").style.left = `${(eventStartPercent + eventEndPercent) / 2}%`;   
 
     
       // Event window shading
