@@ -272,8 +272,8 @@
   <!-- Timeline -->
   <div class="timeline-box">
   <div class="timeline-labels">
-    <span id="label-standby">📣Standby</span>
-    <span id="label-activation">📣Activation</span>
+    <span id="label-standby">📣 Standby</span>
+    <span id="label-activation">📣 Activation</span>
     <span id="label-event">⚡Event</span>
   </div>
   <div class="timeline-track">
@@ -429,9 +429,9 @@ standbyActivationShade.style.left = `${standbyStartPercent}%`;
 standbyActivationShade.style.width = `${activationEndPercent - standbyStartPercent}%`;
 
 // Center each label above its shaded area
-document.getElementById("label-standby").style.left = `${(standbyStartPercent + activationStartPercent) / 2}%`;
-document.getElementById("label-activation").style.left = `${(activationStartPercent + eventStartPercent) / 2}%`;
-document.getElementById("label-event").style.left = `${(eventStartPercent + eventEndPercent) / 2}%`;
+document.getElementById("label-standby").style.left = `${(standbyStartPercent + activationStartPercent) / 2 - 1}%`;
+document.getElementById("label-activation").style.left = `${(activationStartPercent + eventStartPercent) / 2 - 1}%`;
+document.getElementById("label-event").style.left = `${(eventStartPercent + eventEndPercent) / 2 - 1}%`;
 
 
     
