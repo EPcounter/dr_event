@@ -423,7 +423,6 @@ const eventStartPercent = ((eventStart - timelineStart) / timelineDuration) * 10
 const eventEndPercent = ((eventEnd - timelineStart) / timelineDuration) * 100;
 
 // Shaded area from standby to activation
-const standbyStartPercent = ((standbyTime - timelineStart) / timelineDuration) * 100;
 const activationEndPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
 const standbyActivationShade = document.getElementById("standby-activation-shade");
 standbyActivationShade.style.left = `${standbyStartPercent}%`;
@@ -443,7 +442,6 @@ document.getElementById("label-event").style.left = `${(eventStartPercent + even
       shade.style.width = `${eventEndPercent - eventStartPercent}%`;
 
       // Activation → Event shaded area
-      const activationStartPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
       const eventStartPercentForShade = ((eventStart - timelineStart) / timelineDuration) * 100;
       const activationEventShade = document.getElementById("activation-event-shade");
       activationEventShade.style.left = `${activationStartPercent}%`;
@@ -583,7 +581,6 @@ if (now >= timelineStart && now <= timelineEnd) {
   document.getElementById("label-standby").style.color = now > standbyTime ? "#777" : "#fff";
   document.getElementById("label-activation").style.color = now > activationTime ? "#777" : "#fff";
   document.getElementById("label-event").style.color = now > eventStart ? (now < eventEnd ? "red" : "#777") : "#fff";
-  document.getElementById("label-end").style.color = now > eventEnd ? "#fff" : "#777";
 }
 
 
