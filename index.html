@@ -236,6 +236,14 @@
   top: 0;
   border-radius: 4px;
 }
+    #standby-activation-shade {
+  position: absolute;
+  height: 6px;
+  background-color: rgba(241, 196, 15, 0.3); /* soft yellow */
+  top: 0;
+  border-radius: 4px;
+  z-index: 1;
+}
     
   </style>
 </head>
@@ -251,10 +259,10 @@
     <span id="label-end">✅ End</span>
   </div>
   <div class="timeline-track">
+      <div id="standby-activation-shade"></div>
       <div id="event-window-shade"></div> <!-- ← Add this -->
-
-    <div id="timeline-progress"></div>
-    <div class="timeline-now-marker">NOW</div>
+      <div id="timeline-progress"></div>
+      <div class="timeline-now-marker">NOW</div>
 
     <!-- Tick markers -->
     <div class="timeline-tick" style="left: 0%;"><span id="tick-time-standby">--</span></div>
@@ -381,11 +389,22 @@
   const eventStart = new Date("2025-06-30T18:00:00+04:00");
   const eventEnd = new Date("2025-06-30T22:00:00+04:00");
 
+    
+    
   // Define timeline window
   const timelineStart = new Date("2025-06-29T00:00:00+04:00");
   const timelineEnd = new Date("2025-06-30T23:59:59+04:00");
   const timelineDuration = timelineEnd - timelineStart;
 
+// Shaded area from standby to activation
+const standbyStartPercent = ((standbyTime - timelineStart) / timelineDuration) * 100;
+const activationEndPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
+const standbyActivationShade = document.getElementById("standby-activation-shade");
+standbyActivationShade.style.left = `${standbyStartPercent}%`;
+standbyActivationShade.style.width = `${activationEndPercent - standbyStartPercent}%`;
+
+
+    
       // Event window shading
       const eventStartPercent = ((eventStart - timelineStart) / timelineDuration) * 100;
       const eventEndPercent = ((eventEnd - timelineStart) / timelineDuration) * 100;
