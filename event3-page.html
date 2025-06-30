@@ -440,17 +440,22 @@ standbyActivationShade.style.width = `${activationEndPercent - standbyStartPerce
   }
 
   // Tick labels
-  document.getElementById("tick-time-standby").textContent = standbyTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  document.getElementById("tick-time-start").textContent = timelineStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    document.getElementById("tick-time-standby").textContent = standbyTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   document.getElementById("tick-time-activation").textContent = activationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   document.getElementById("tick-time-event").textContent = eventStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   document.getElementById("tick-time-end").textContent = eventEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+document.getElementById("tick-time-finish").textContent = timelineEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
   // Tick positions
-  const ticks = document.querySelectorAll(".timeline-tick");
-  ticks[0].style.left = `${percentOfTimeline(standbyTime)}%`;
-  ticks[1].style.left = `${percentOfTimeline(activationTime)}%`;
-  ticks[2].style.left = `${percentOfTimeline(eventStart)}%`;
-  ticks[3].style.left = `${percentOfTimeline(eventEnd)}%`;
+// Position each tick along the timeline
+ticks[0].style.left = `0%`; // Start of timeline
+ticks[1].style.left = `${percentOfTimeline(standbyTime)}%`;
+ticks[2].style.left = `${percentOfTimeline(activationTime)}%`;
+ticks[3].style.left = `${percentOfTimeline(eventStart)}%`;
+ticks[4].style.left = `${percentOfTimeline(eventEnd)}%`;
+ticks[5].style.left = `100%`; // End of timeline
 
   // Find next upcoming
   const times = [
