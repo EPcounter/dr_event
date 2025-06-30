@@ -196,9 +196,6 @@
 }
 
 
-
-
-
 .dot-ended {
   display: inline-block;
   font-size: 12px;
@@ -279,8 +276,8 @@
   <div class="widget-row">
     <div class="countdown-box">
     <div class="title">📊 Event Info</div>
-    <div class="time-label">Event #: 2</div>
-    <div class="status-text">Peak Cost - 24 hr Notice</div>
+    <div class="time-label">Event #: 3</div>
+    <div class="status-text">Peak Demand - 24 hr Notice</div>
     <div class="status-text" id="event-status-tag">--</div>
   </div>
 
@@ -294,21 +291,21 @@
     
     <div class="countdown-box" id="standby-box">
       <div class="title">📣 Standby Notice</div>
-      <div class="time-label">June 29, 6:00 PM</div>
+      <div class="time-label">July 2, 1:00 PM</div>
       <div id="standby-timer" class="timer"></div>
       <div id="standby-status" class="status-text"></div>
     </div>
 
     <div class="countdown-box" id="activation-box">
       <div class="title">📣 Activation Notice</div>
-      <div class="time-label">June 30, 9:00 AM</div>
+      <div class="time-label">July 3, 9:00 AM</div>
       <div id="activation-timer" class="timer"></div>
       <div id="activation-status" class="status-text"></div>
     </div>
 
     <div class="countdown-box" id="event-box">
       <div class="title">⚡ Activation Event</div>
-      <div class="time-label">June 30, 6:00 PM – 10:00 PM</div>
+      <div class="time-label">July 3, 1:00 PM – 5:00 PM</div>
       <div id="event-timer" class="timer"></div>
       <div id="event-status" class="status-text"></div>
       <div id="live-label" class="live-label" style="display: none;">LIVE</div>
@@ -384,16 +381,16 @@
   function updateCountdowns() {
   const now = getAbuDhabiNow();
 
-  const standbyTime = new Date("2025-06-29T18:00:00+04:00");
-  const activationTime = new Date("2025-06-30T09:00:00+04:00");
-  const eventStart = new Date("2025-06-30T18:00:00+04:00");
-  const eventEnd = new Date("2025-06-30T22:00:00+04:00");
+  const standbyTime = new Date("2025-07-02T13:00:00+04:00");
+  const activationTime = new Date("2025-07-03T09:00:00+04:00");
+  const eventStart = new Date("2025-07-03T13:00:00+04:00");
+  const eventEnd = new Date("2025-06-30T17:00:00+04:00");
 
     
     
   // Define timeline window
-  const timelineStart = new Date("2025-06-29T00:00:00+04:00");
-  const timelineEnd = new Date("2025-06-30T23:59:59+04:00");
+  const timelineStart = new Date("2025-07-02T00:00:00+04:00");
+  const timelineEnd = new Date("2025-07-03T23:59:59+04:00");
   const timelineDuration = timelineEnd - timelineStart;
 
 // Shaded area from standby to activation
