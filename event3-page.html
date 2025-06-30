@@ -263,18 +263,6 @@
 #event-window-shade {
   animation: pulseEventWindow 2s infinite;
 }
-    .timeline-tooltip {
-  position: absolute;
-  background: #222;
-  color: #fff;
-  font-size: 11px;
-  padding: 4px 6px;
-  border-radius: 4px;
-  pointer-events: none;
-  display: none;
-  z-index: 10;
-  transform: translateX(-50%);
-}
     
   </style>
 </head>
@@ -295,8 +283,6 @@
       <div id="timeline-progress"></div>
       <div class="timeline-now-marker">NOW</div>
 
-      <div id="timeline-tooltip" class="timeline-tooltip"></div>
-    
     <!-- Tick markers -->
   <div class="timeline-tick"><span id="tick-time-start">--</span></div>
 <div class="timeline-tick"><span id="tick-time-standby">--</span></div>
@@ -598,29 +584,8 @@ if (now >= timelineStart && now <= timelineEnd) {
 }
 
 
-  // Hover-based tooltip logic
-  const tooltip = document.getElementById("timeline-tooltip");
-  const timelineTrack = document.querySelector(".timeline-track");
-  
-  timelineTrack.addEventListener("mousemove", (e) => {
-    const rect = timelineTrack.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    const hoveredTime = new Date(timelineStart.getTime() + percent * timelineDuration);
-    tooltip.style.left = `${percent * 100}%`;
-    tooltip.style.display = "block";
-    tooltip.textContent = hoveredTime.toLocaleTimeString("en-US", {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  });
-  
-  timelineTrack.addEventListener("mouseleave", () => {
-    tooltip.style.display = "none";
-  });
-  
-  setInterval(updateCountdowns, 1000);
-  updateCountdowns();
+    setInterval(updateCountdowns, 1000);
+    updateCountdowns();
   </script>
 </body>
 </html>
