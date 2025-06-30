@@ -229,6 +229,13 @@
   background-color: #3498db; /* blue */
   animation: blink 1s infinite;
 }
+    #event-window-shade {
+  position: absolute;
+  height: 6px;
+  background-color: rgba(231, 76, 60, 0.3); /* soft red */
+  top: 0;
+  border-radius: 4px;
+}
     
   </style>
 </head>
@@ -244,6 +251,8 @@
     <span id="label-end">✅ End</span>
   </div>
   <div class="timeline-track">
+      <div id="event-window-shade"></div> <!-- ← Add this -->
+
     <div id="timeline-progress"></div>
     <div class="timeline-now-marker">NOW</div>
 
@@ -377,6 +386,13 @@
   const timelineEnd = new Date("2025-06-30T23:59:59+04:00");
   const timelineDuration = timelineEnd - timelineStart;
 
+      // Event window shading
+      const eventStartPercent = ((eventStart - timelineStart) / timelineDuration) * 100;
+      const eventEndPercent = ((eventEnd - timelineStart) / timelineDuration) * 100;
+      const shade = document.getElementById("event-window-shade");
+      shade.style.left = `${eventStartPercent}%`;
+      shade.style.width = `${eventEndPercent - eventStartPercent}%`;
+    
   // Helper: timeline % position
   function percentOfTimeline(time) {
     return ((time - timelineStart) / timelineDuration) * 100;
