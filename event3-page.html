@@ -241,6 +241,14 @@
   border-radius: 4px;
   z-index: 3;
 }
+    #activation-event-shade {
+  position: absolute;
+  height: 6px;
+  background-color: rgba(255, 165, 0, 0.35); /* translucent orange */
+  top: 0;
+  border-radius: 4px;
+  z-index: 2;
+}
     
   </style>
 </head>
@@ -257,6 +265,7 @@
   </div>
   <div class="timeline-track">
       <div id="standby-activation-shade"></div>
+      <div id="activation-event-shade"></div>
       <div id="event-window-shade"></div> <!-- ← Add this -->
       <div id="timeline-progress"></div>
       <div class="timeline-now-marker">NOW</div>
@@ -408,6 +417,13 @@ standbyActivationShade.style.width = `${activationEndPercent - standbyStartPerce
       const shade = document.getElementById("event-window-shade");
       shade.style.left = `${eventStartPercent}%`;
       shade.style.width = `${eventEndPercent - eventStartPercent}%`;
+
+      // Activation → Event shaded area
+      const activationStartPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
+      const eventStartPercentForShade = ((eventStart - timelineStart) / timelineDuration) * 100;
+      const activationEventShade = document.getElementById("activation-event-shade");
+      activationEventShade.style.left = `${activationStartPercent}%`;
+      activationEventShade.style.width = `${eventStartPercentForShade - activationStartPercent}%`;
     
   // Helper: timeline % position
   function percentOfTimeline(time) {
