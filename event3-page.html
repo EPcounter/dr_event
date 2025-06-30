@@ -249,6 +249,15 @@
   border-radius: 4px;
   z-index: 2;
 }
+    @keyframes pulseEventWindow {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+
+#event-window-shade {
+  animation: pulseEventWindow 2s infinite;
+}
     
   </style>
 </head>
