@@ -417,6 +417,11 @@
   const timelineEnd = new Date("2025-07-03T23:59:59+04:00");
   const timelineDuration = timelineEnd - timelineStart;
 
+    const standbyStartPercent = ((standbyTime - timelineStart) / timelineDuration) * 100;
+const activationStartPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
+const eventStartPercent = ((eventStart - timelineStart) / timelineDuration) * 100;
+const eventEndPercent = ((eventEnd - timelineStart) / timelineDuration) * 100;
+
 // Shaded area from standby to activation
 const standbyStartPercent = ((standbyTime - timelineStart) / timelineDuration) * 100;
 const activationEndPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
@@ -424,10 +429,11 @@ const standbyActivationShade = document.getElementById("standby-activation-shade
 standbyActivationShade.style.left = `${standbyStartPercent}%`;
 standbyActivationShade.style.width = `${activationEndPercent - standbyStartPercent}%`;
 
- // Center each label above its shaded area
-document.getElementById("label-standby").style.left = `${(standbyStartPercent + activationEndPercent) / 2}%`;
-document.getElementById("label-activation").style.left = `${(activationStartPercent + eventStartPercentForShade) / 2}%`;
-document.getElementById("label-event").style.left = `${(eventStartPercent + eventEndPercent) / 2}%`;   
+// Center each label above its shaded area
+document.getElementById("label-standby").style.left = `${(standbyStartPercent + activationStartPercent) / 2}%`;
+document.getElementById("label-activation").style.left = `${(activationStartPercent + eventStartPercent) / 2}%`;
+document.getElementById("label-event").style.left = `${(eventStartPercent + eventEndPercent) / 2}%`;
+
 
     
       // Event window shading
