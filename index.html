@@ -152,13 +152,6 @@
   font-weight: bold;
   text-transform: uppercase;
 }
-    #event-window-shade {
-  position: absolute;
-  height: 6px;
-  background-color: rgba(231, 76, 60, 0.3); /* soft red */
-  top: 0;
-  border-radius: 4px;
-}
     .timeline-tick {
   position: absolute;
   top: 8px;
@@ -251,7 +244,6 @@
     <span id="label-end">✅ End</span>
   </div>
   <div class="timeline-track">
-    <div id="event-window-shade"></div>
     <div id="timeline-progress"></div>
     <div class="timeline-now-marker">NOW</div>
 
@@ -384,25 +376,6 @@
   const timelineStart = new Date("2025-06-29T00:00:00+04:00");
   const timelineEnd = new Date("2025-06-30T23:59:59+04:00");
   const timelineDuration = timelineEnd - timelineStart;
-    const nowPosition = ((now - timelineStart) / timelineDuration) * 100;
-
-    // Update NOW marker
-const marker = document.querySelector(".timeline-now-marker");
-marker.style.left = `${nowPosition}%`;
-marker.textContent = now >= timelineEnd ? "END" : "NOW";
-
-// Event window shading
-const eventStartPercent = ((eventStart - timelineStart) / timelineDuration) * 100;
-const eventEndPercent = ((eventEnd - timelineStart) / timelineDuration) * 100;
-const shade = document.getElementById("event-window-shade");
-shade.style.left = `${eventStartPercent}%`;
-shade.style.width = `${eventEndPercent - eventStartPercent}%`;
-
-// Yellow progress (starts at standby time)
-const standbyOffset = standbyTime - timelineStart;
-const effectiveElapsed = now - standbyTime;
-const progressPercent = Math.min(100, Math.max(0, (effectiveElapsed / (timelineEnd - standbyTime)) * 100));
-document.getElementById("timeline-progress").style.width = `${progressPercent}%`;
 
   // Helper: timeline % position
   function percentOfTimeline(time) {
@@ -486,13 +459,8 @@ document.getElementById("timeline-progress").style.width = `${progressPercent}%`
   document.getElementById("next-refresh-text").textContent = `Next update at ${formatAMPM(nextRefresh)} (${cd.h}:${cd.m}:${cd.s})`;
 
   // Timeline progress and marker
-    const progressStart = standbyTime - timelineStart;
-    const progressNow = now - standbyTime;
-    const progressPercent = Math.min(100, Math.max(0, (progressNow / (timelineEnd - standbyTime)) * (100 - (progressStart / timelineDuration * 100))));
-    const progressOffsetPercent = (progressStart / timelineDuration) * 100;
-    document.getElementById("timeline-progress").style.width = `${progressPercent}%`;
-    document.getElementById("timeline-progress").style.left = `${progressOffsetPercent}%`;
-    
+  const progressPercent = Math.min(100, Math.max(0, ((now - timelineStart) / timelineDuration) * 100));
+  document.getElementById("timeline-progress").style.width = `${progressPercent}%`;
   const marker = document.querySelector(".timeline-now-marker");
   marker.style.left = `${progressPercent}%`;
   marker.textContent = now >= timelineEnd ? "END" : "NOW";
