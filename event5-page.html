@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DR Event Countdown</title>
+  <meta charset="UTF-8">
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+  <style>
+    body {
+      margin: 0;
+      padding: 8px;
+      background: #121212; /* dark background */
+      font-family: 'Open Sans', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Timeline styles */
+.timeline-box {
+  width: 100%;
+  max-width: 1400px;
+  text-align: center;
+  margin-top: 24px;   /* Padding before */
+  margin-bottom: 24px; /* Padding after */
+}
+
+    
+.timeline-labels {
+  position: relative;
+  height: 20px;
+  margin-bottom: 4px;
+}
+
+.timeline-labels span {
+  position: absolute;
+  font-size: 12px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: #fff;
+}
+    .timeline-track {
+      position: relative;
+      height: 6px;
+      background: #333;
+      border-radius: 4px;
+      margin: 0 8px;
+    }
+    #timeline-progress {
+      position: absolute;
+      height: 6px;
+      background: #f39c12;
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+    .timeline-now-marker {
+      position: absolute;
+      top: -14px;
+      font-size: 10px;
+      background: #f39c12;
+      color: #000;
+      padding: 1px 4px;
+      border-radius: 3px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    /* Countdown widget styles */
+    .widget-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+    }
+    .countdown-box {
+      background: #1f1f1f;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      width: 200px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.3);
+      color: #fff;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .time-label {
+      font-size: 12px;
+      color: #bbb;
+      margin-bottom: 6px;
+    }
+    .status-text {
+      font-size: 12px;
+      margin-top: 6px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .live-label {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      color: white;
+      background-color: red;
+      border-radius: 4px;
+    }
+    .timer {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+    }
+    .digit {
+      font-size: 18px;
+      color: #fff;
+      padding: 4px 6px;
+      border-radius: 4px;
+      min-width: 30px;
+    }
+    .digit.default {
+      background: linear-gradient(to bottom, #444, #111);
+    }
+    .digit.active {
+      background: linear-gradient(to bottom, #f5d76e, #f39c12);
+    }
+    .digit.seconds {
+      background: linear-gradient(to bottom, #eee, #ccc) !important;
+      color: #333 !important;
+    }
+    .separator {
+      font-size: 18px;
+      color: #ccc;
+      padding: 0 1px;
+    }
+    .local-date, .next-refresh-time {
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    .box-up-next {
+      background: #2e2e1f !important;
+      border: 1px solid #f4d03f !important;
+    }
+    .box-past {
+      background: #2b2b2b !important;
+      color: #777;
+    }
+    .box-past .title,
+    .box-past .status-text,
+    .box-past .time-label {
+      color: #777 !important;
+    }
+    #current-box .status-text {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 6px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+    .timeline-tick {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #ccc;
+  white-space: nowrap;
+}
+    .status-upcoming {
+  color: #f5d76e; /* yellow */
+}
+.status-live {
+  color: #e74c3c; /* red */
+}
+.status-ended {
+  color: #999; /* gray */
+}
+.blinker {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background-color: #f5d76e;
+  animation: blink 1s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+    .status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+
+.dot-ended {
+  display: inline-block;
+  font-size: 12px;
+  margin-left: 6px;
+  color: #bbb;
+}
+
+@keyframes blink {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+.dot-yellow {
+  background-color: #f5d76e; /* yellow */
+  animation: blink 1s infinite;
+}
+
+.dot-orange {
+  background-color: orange;
+  animation: blink 1s infinite;
+}
+
+.dot-red {
+  background-color: #e74c3c;
+  animation: blink 1s infinite;
+}
+    .dot-blue {
+  background-color: #3498db; /* blue */
+  animation: blink 1s infinite;
+}
+    #event-window-shade {
+  position: absolute;
+  height: 6px;
+/*  background-color: rgba(231, 76, 60, 0.3); /* soft red */
+background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
+
+      top: 0;
+  border-radius: 4px;
+}
+   #standby-activation-shade {
+  position: absolute;
+  height: 6px;
+   background-color: rgba(255, 223, 70, 0.25); /* light yellow */
+  top: 0;
+  border-radius: 4px;
+  z-index: 3;
+}
+    #activation-event-shade {
+  position: absolute;
+  height: 6px;
+ background-color: rgba(255, 140, 0, 0.25); /* soft orange */
+  top: 0;
+  border-radius: 4px;
+  z-index: 2;
+}
+@keyframes pulseEventWindow {
+  0% { opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+#event-window-shade {
+  animation: pulseEventWindow 2s infinite;
+}
+    
+  </style>
+</head>
+<body>
+
+
+  <!-- Timeline -->
+  <div class="timeline-box">
+  <div class="timeline-labels">
+    <span id="label-standby">📣 Standby</span>
+    <span id="label-activation">📣 Activation</span>
+    <span id="label-event">⚡Event</span>
+  </div>
+  <div class="timeline-track">
+      <div id="standby-activation-shade"></div>
+      <div id="activation-event-shade"></div>
+      <div id="event-window-shade"></div> <!-- ← Add this -->
+      <div id="timeline-progress"></div>
+      <div class="timeline-now-marker">NOW</div>
+
+    <!-- Tick markers -->
+  <div class="timeline-tick"><span id="tick-time-start">--</span></div>
+<div class="timeline-tick"><span id="tick-time-standby">--</span></div>
+<div class="timeline-tick"><span id="tick-time-activation">--</span></div>
+<div class="timeline-tick"><span id="tick-time-event">--</span></div>
+<div class="timeline-tick"><span id="tick-time-end">--</span></div>
+<div class="timeline-tick"><span id="tick-time-finish">--</span></div>
+  </div>
+</div>
+
+
+  
+
+  <!-- Countdown widgets -->
+  <div class="widget-row">
+    <div class="countdown-box">
+    <div class="title">📊 Event Info</div>
+    <div class="time-label">Event #: 5</div>
+    <div class="status-text">Peak Cost - 24 hr Notice</div>
+    <div class="status-text" id="event-status-tag">--</div>
+  </div>
+
+
+    
+    <div class="countdown-box" id="standby-box">
+      <div class="title">📣 Standby Notice</div>
+      <div class="time-label">July 10, 6:00 PM</div>
+      <div id="standby-timer" class="timer"></div>
+      <div id="standby-status" class="status-text"></div>
+    </div>
+
+    <div class="countdown-box" id="activation-box">
+      <div class="title">📣 Activation Notice</div>
+      <div class="time-label">July 11, 9:00 AM</div>
+      <div id="activation-timer" class="timer"></div>
+      <div id="activation-status" class="status-text"></div>
+    </div>
+
+    <div class="countdown-box" id="event-box">
+      <div class="title">⚡ Activation Event</div>
+      <div class="time-label">July 11, 6:00 PM – 10:00 PM</div>
+      <div id="event-timer" class="timer"></div>
+      <div id="event-status" class="status-text"></div>
+      <div id="live-label" class="live-label" style="display: none;">LIVE</div>
+    </div>
+
+    <div class="countdown-box" id="current-box">
+        <div class="title">🕒 Current Time</div>
+        <div class="time-label" id="local-date">Loading...</div>
+        <div id="current-time" class="timer"></div>
+        <div class="status-text" id="next-refresh-text">Next update at --:-- (--:--)</div>
+  </div>
+  </div>
+
+  <!-- Script -->
+  <script>
+    const abuDhabiOffset = 4 * 60;
+
+    function getAbuDhabiNow() {
+      const now = new Date();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      return new Date(utc + abuDhabiOffset * 60000);
+    }
+
+    function getCountdownParts(diffMs) {
+      const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return {
+        h: hours.toString().padStart(2, '0'),
+        m: minutes.toString().padStart(2, '0'),
+        s: seconds.toString().padStart(2, '0')
+      };
+    }
+
+    function renderTimer(containerId, parts, isActive) {
+      const digitClass = isActive ? 'digit active' : 'digit default';
+      document.getElementById(containerId).innerHTML = `
+        <div class="${digitClass}">${parts.h}</div>
+        <div class="separator">:</div>
+        <div class="${digitClass}">${parts.m}</div>
+        <div class="separator">:</div>
+        <div class="digit seconds">${parts.s}</div>
+      `;
+    }
+
+    function formatDate(date) {
+      const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+      return date.toLocaleDateString('en-US', options);
+    }
+
+    function formatAMPM(date) {
+      let hours = date.getHours();
+      let minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      return hours + ':' + minutes + ' ' + ampm;
+    }
+
+    function getNextRefreshTime(nowAbuDhabi) {
+      const next = new Date(nowAbuDhabi);
+      next.setMinutes(5);
+      next.setSeconds(0);
+      next.setMilliseconds(0);
+      if (nowAbuDhabi.getMinutes() >= 5) {
+        next.setHours(next.getHours() + 1);
+      }
+      return next;
+    }
+
+  function updateCountdowns() {
+  const now = getAbuDhabiNow();
+
+  const standbyTime = new Date("2025-07-10T18:00:00+04:00");
+  const activationTime = new Date("2025-07-11T09:00:00+04:00");
+  const eventStart = new Date("2025-07-11T18:00:00+04:00");
+  const eventEnd = new Date("2025-07-11T22:00:00+04:00");
+
+    
+    
+  // Define timeline window
+  const timelineStart = new Date("2025-07-10T00:00:00+04:00");
+  const timelineEnd = new Date("2025-07-11T23:59:59+04:00");
+  const timelineDuration = timelineEnd - timelineStart;
+
+    const standbyStartPercent = ((standbyTime - timelineStart) / timelineDuration) * 100;
+const activationStartPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
+const eventStartPercent = ((eventStart - timelineStart) / timelineDuration) * 100;
+const eventEndPercent = ((eventEnd - timelineStart) / timelineDuration) * 100;
+
+// Shaded area from standby to activation
+const activationEndPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
+const standbyActivationShade = document.getElementById("standby-activation-shade");
+standbyActivationShade.style.left = `${standbyStartPercent}%`;
+standbyActivationShade.style.width = `${activationEndPercent - standbyStartPercent}%`;
+
+// Center each label above its shaded area
+document.getElementById("label-standby").style.left = `${(standbyStartPercent + activationStartPercent) / 2 - 1}%`;
+document.getElementById("label-activation").style.left = `${(activationStartPercent + eventStartPercent) / 2 - 1}%`;
+document.getElementById("label-event").style.left = `${(eventStartPercent + eventEndPercent) / 2 - 1}%`;
+
+
+    
+      // Event window shading
+      
+      const shade = document.getElementById("event-window-shade");
+      shade.style.left = `${eventStartPercent}%`;
+      shade.style.width = `${eventEndPercent - eventStartPercent}%`;
+
+      // Activation → Event shaded area
+      const eventStartPercentForShade = ((eventStart - timelineStart) / timelineDuration) * 100;
+      const activationEventShade = document.getElementById("activation-event-shade");
+      activationEventShade.style.left = `${activationStartPercent}%`;
+      activationEventShade.style.width = `${eventStartPercentForShade - activationStartPercent}%`;
+    
+  // Helper: timeline % position
+  function percentOfTimeline(time) {
+    return ((time - timelineStart) / timelineDuration) * 100;
+  }
+
+  // Tick labels
+  document.getElementById("tick-time-start").textContent = timelineStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    document.getElementById("tick-time-standby").textContent = standbyTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  document.getElementById("tick-time-activation").textContent = activationTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  document.getElementById("tick-time-event").textContent = eventStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  document.getElementById("tick-time-end").textContent = eventEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+document.getElementById("tick-time-finish").textContent = timelineEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+  // Tick positions
+// Position each tick along the timeline
+    const ticks = document.querySelectorAll(".timeline-tick");
+ticks[0].style.left = `0%`; // Start of timeline
+ticks[1].style.left = `${percentOfTimeline(standbyTime)}%`;
+ticks[2].style.left = `${percentOfTimeline(activationTime)}%`;
+ticks[3].style.left = `${percentOfTimeline(eventStart)}%`;
+ticks[4].style.left = `${percentOfTimeline(eventEnd)}%`;
+ticks[5].style.left = `100%`; // End of timeline
+
+  // Find next upcoming
+  const times = [
+    { id: 'standby', time: standbyTime },
+    { id: 'activation', time: activationTime },
+    { id: 'event', time: eventStart }
+  ];
+  const futureEvents = times.filter(t => now < t.time).sort((a, b) => a.time - b.time);
+  const nextUpcomingId = futureEvents.length ? futureEvents[0].id : null;
+
+  // Clear classes
+  ['standby', 'activation', 'event'].forEach(id => {
+    const box = document.getElementById(`${id}-box`);
+    box.classList.remove('box-up-next', 'box-past');
+  });
+
+  // Standby
+  const sbBox = document.getElementById("standby-box");
+  renderTimer("standby-timer", getCountdownParts(standbyTime - now), nextUpcomingId === 'standby');
+  document.getElementById("standby-status").textContent = now >= standbyTime ? "PAST" : "Starting in";
+  if (now >= standbyTime) sbBox.classList.add("box-past");
+  if (nextUpcomingId === 'standby') sbBox.classList.add("box-up-next");
+
+  // Activation
+  const actBox = document.getElementById("activation-box");
+  renderTimer("activation-timer", getCountdownParts(activationTime - now), nextUpcomingId === 'activation');
+  document.getElementById("activation-status").textContent = now >= activationTime ? "PAST" : "Starting in";
+  if (now >= activationTime) actBox.classList.add("box-past");
+  if (nextUpcomingId === 'activation') actBox.classList.add("box-up-next");
+
+  // Event
+  const evBox = document.getElementById("event-box");
+  const liveLabel = document.getElementById("live-label");
+  let eventParts, eventStatus;
+  if (now < eventStart) {
+    eventParts = getCountdownParts(eventStart - now);
+    eventStatus = "Starting in";
+    liveLabel.style.display = "none";
+  } else if (now >= eventStart && now < eventEnd) {
+    eventParts = getCountdownParts(eventEnd - now);
+    eventStatus = "Ending in";
+    liveLabel.style.display = "inline-block";
+  } else {
+    eventParts = getCountdownParts(0);
+    eventStatus = "ENDED";
+    liveLabel.style.display = "none";
+  }
+  renderTimer("event-timer", eventParts, nextUpcomingId === 'event');
+  document.getElementById("event-status").textContent = eventStatus;
+  if (now >= eventEnd) evBox.classList.add("box-past");
+  if (nextUpcomingId === 'event') evBox.classList.add("box-up-next");
+
+  // Current time
+  const h = now.getHours().toString().padStart(2, '0');
+  const m = now.getMinutes().toString().padStart(2, '0');
+  const s = now.getSeconds().toString().padStart(2, '0');
+  document.getElementById('local-date').textContent = formatDate(now);
+  renderTimer("current-time", { h, m, s }, false);
+
+  // Refresh info
+  const nextRefresh = getNextRefreshTime(now);
+  const cd = getCountdownParts(nextRefresh - now);
+  document.getElementById("next-refresh-text").textContent = `Next update at ${formatAMPM(nextRefresh)} (${cd.h}:${cd.m}:${cd.s})`;
+
+// Progress bar: starts from standbyTime, fills as time progresses, sized on full timeline
+const progressStart = Math.max(0, standbyTime - timelineStart);
+const progressNow = Math.min(now, timelineEnd);
+const progressElapsed = Math.max(0, progressNow - standbyTime);
+
+const progressLeftPercent = (progressStart / timelineDuration) * 100;
+const progressWidthPercent = (progressElapsed / timelineDuration) * 100;
+
+const progressBar = document.getElementById("timeline-progress");
+progressBar.style.left = `${progressLeftPercent}%`;
+progressBar.style.width = `${progressWidthPercent}%`;
+
+  // Marker follows full timeline
+  const absoluteNowPercent = Math.min(100, Math.max(0, ((now - timelineStart) / timelineDuration) * 100));
+  const marker = document.querySelector(".timeline-now-marker");
+if (now >= timelineStart && now <= timelineEnd) {
+  marker.style.display = "block";
+  marker.style.left = `${absoluteNowPercent}%`;
+  marker.textContent = "NOW";
+} else {
+  marker.style.display = "none";
+}
+
+
+  // Status symbol logic
+  const statusTag = document.getElementById("event-status-tag");
+  if (now < standbyTime) {
+    statusTag.innerHTML = `🔸 Planned <span class="status-dot dot-blue"></span>`;
+    statusTag.className = "status-text status-upcoming";
+  } else if (now >= standbyTime && now < activationTime) {
+    statusTag.innerHTML = `⏳ Upcoming <span class="status-dot dot-yellow"></span>`;
+    statusTag.className = "status-text status-upcoming";
+  } else if (now >= activationTime && now < eventStart) {
+    statusTag.innerHTML = `🟠 Preparing <span class="status-dot dot-orange"></span>`;
+    statusTag.className = "status-text status-upcoming";
+  } else if (now >= eventStart && now < eventEnd) {
+    statusTag.innerHTML = `🔴 In Progress <span class="status-dot dot-red"></span>`;
+    statusTag.className = "status-text status-live";
+  } else {
+    statusTag.innerHTML = `✅ Ended`;
+    statusTag.className = "status-text status-ended";
+  }
+
+  // Label colors
+  document.getElementById("label-standby").style.color = now > standbyTime ? "#777" : "#fff";
+  document.getElementById("label-activation").style.color = now > activationTime ? "#777" : "#fff";
+  document.getElementById("label-event").style.color = now > eventStart ? (now < eventEnd ? "red" : "#777") : "#fff";
+}
+
+
+    setInterval(updateCountdowns, 1000);
+    updateCountdowns();
+  </script>
+</body>
+</html>
