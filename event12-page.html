@@ -433,6 +433,27 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   background-color: rgba(255, 255, 255, 0.05);
 }
   */  
+
+
+    .so-marker-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed #aaa;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.so-marker-label {
+  position: absolute;
+  top: -20px;
+  font-size: 10px;
+  color: #aaa;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 4;
+}
   </style>
 </head>
 <body>
@@ -464,9 +485,13 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
 
   <!-- Timeline track with shades, progress, ticks -->
   <div class="timeline-track">
-    <div id="dayahead-border"></div>
-<div id="intraday-border"></div>
 
+    <div id="dayahead-border"></div>  
+    <div id="intraday-border"></div>
+
+    <div id="so-notify-line" class="so-marker-line"></div>
+    <div id="so-notify-label" class="so-marker-label">📩 SO Notified</div>
+    
     <div id="standby-activation-shade"></div>
     <div id="activation-event-shade"></div>
     <div id="event-window-shade"></div>
@@ -674,6 +699,38 @@ ticks[2].style.left = `${percentOfTimeline(activationTime)}%`;
 ticks[3].style.left = `${percentOfTimeline(eventStart)}%`;
 ticks[4].style.left = `${percentOfTimeline(eventEnd)}%`;
 ticks[5].style.left = `100%`; // End of timeline
+
+// === Dynamically add SO Notify marker(s) ===
+const soMarkerTimes = [];
+const currentDay = new Date(timelineStart);
+while (currentDay <= timelineEnd) {
+  const notifyTime = new Date(currentDay);
+  notifyTime.setHours(10, 0, 0, 0); // Set time to 10:00 AM
+  if (notifyTime >= timelineStart && notifyTime <= timelineEnd) {
+    soMarkerTimes.push(new Date(notifyTime));
+  }
+  currentDay.setDate(currentDay.getDate() + 1);
+}
+
+// Append markers to the timeline track
+soMarkerTimes.forEach((notifyTime, index) => {
+  const percent = percentOfTimeline(notifyTime);
+
+  // Line
+  const line = document.createElement("div");
+  line.className = "so-marker-line";
+  line.style.left = `${percent}%`;
+
+  // Label
+  const label = document.createElement("div");
+  label.className = "so-marker-label";
+  label.style.left = `${percent}%`;
+  label.textContent = "📩 10AM SO";
+
+  // Append
+  document.querySelector(".timeline-track").appendChild(line);
+  document.querySelector(".timeline-track").appendChild(label);
+});
 
   // Find next upcoming
   const times = [
