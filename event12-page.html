@@ -338,7 +338,16 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
 #intraday-border {
   left: 50%;
 
-    
+ @keyframes pulseOnHover {
+  0%   { opacity: 0.3; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+#standby-activation-shade:hover,
+#activation-event-shade:hover {
+  animation: pulseOnHover 1.5s infinite;
+}
+   
   </style>
 </head>
 <body>
