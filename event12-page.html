@@ -270,26 +270,19 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   animation: pulseEventWindow 2s infinite;
 }
 
-    #shade-dayahead,
-#shade-intraday {
-  position: absolute;
-  height: 6px;
-  top: 0;
-  border-radius: 4px;
-  z-index: 0;
-}
-
-#shade-dayahead {
-  background-color: rgba(52, 152, 219, 0.1); /* light blue */
-}
-
-#shade-intraday {
-  background-color: rgba(231, 76, 60, 0.1); /* light red */
-}
-
-#label-dayahead, #label-intraday {
+#label-dayahead,
+#label-intraday {
   font-size: 11px;
-  color: #ccc;
+  color: #aaa;
+}
+
+#timeline-divider {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 0;
+  border-left: 2px dashed #888;
+  z-index: 1;
 }
 
     
@@ -301,7 +294,6 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   <!-- Timeline -->
   <div class="timeline-box">
   <div class="timeline-labels">
-
     <span id="label-dayahead">📅 Day-Ahead</span>
 <span id="label-intraday">🕘 Intra-Day</span>
 
@@ -313,11 +305,10 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
       <div id="standby-activation-shade"></div>
       <div id="activation-event-shade"></div>
       <div id="event-window-shade"></div> <!-- ← Add this -->
-    <div id="shade-dayahead"></div>
-<div id="shade-intraday"></div>
-
       <div id="timeline-progress"></div>
       <div class="timeline-now-marker">NOW</div>
+    <div id="timeline-divider"></div>
+
 
     <!-- Tick markers -->
   <div class="timeline-tick"><span id="tick-time-start">--</span></div>
@@ -336,8 +327,8 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   <div class="widget-row">
     <div class="countdown-box">
     <div class="title">📊 Event Info</div>
-    <div class="time-label">Event #: 12</div>
-    <div class="status-text">Peak Cost - Standard 12hr Notice</div>
+    <div class="time-label">Event #: 11</div>
+    <div class="status-text">Peak Demand - Short 6hr Notice</div>
     <div class="status-text" id="event-status-tag">--</div>
   </div>
 
@@ -345,21 +336,21 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
     
     <div class="countdown-box" id="standby-box">
       <div class="title">📣 Standby Notice</div>
-      <div class="time-label">July 29, 6:00 PM</div>
+      <div class="time-label">July 28, 7:00 AM</div>
       <div id="standby-timer" class="timer"></div>
       <div id="standby-status" class="status-text"></div>
     </div>
 
     <div class="countdown-box" id="activation-box">
       <div class="title">📣 Activation Notice</div>
-      <div class="time-label">July 30, 9:00 AM</div>
+      <div class="time-label">July 28, 9:00 AM</div>
       <div id="activation-timer" class="timer"></div>
       <div id="activation-status" class="status-text"></div>
     </div>
 
     <div class="countdown-box" id="event-box">
       <div class="title">⚡ Activation Event</div>
-      <div class="time-label">July 30, 6:00 PM – 10:00 PM</div>
+      <div class="time-label">July 28, 1:00 PM – 5:00 PM</div>
       <div id="event-timer" class="timer"></div>
       <div id="event-status" class="status-text"></div>
       <div id="live-label" class="live-label" style="display: none;">LIVE</div>
@@ -435,44 +426,32 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   function updateCountdowns() {
   const now = getAbuDhabiNow();
 
-  const standbyTime = new Date("2025-07-29T18:00:00+04:00");
-  const activationTime = new Date("2025-07-30T09:00:00+04:00");
-  const eventStart = new Date("2025-07-30T18:00:00+04:00");
-  const eventEnd = new Date("2025-07-30T22:00:00+04:00");
+  const standbyTime = new Date("2025-07-28T07:00:00+04:00");
+  const activationTime = new Date("2025-07-28T09:00:00+04:00");
+  const eventStart = new Date("2025-07-28T13:00:00+04:00");
+  const eventEnd = new Date("2025-07-28T17:00:00+04:00");
 
     
     
   // Define timeline window
-  const timelineStart = new Date("2025-07-29T00:00:00+04:00");
-  const timelineEnd = new Date("2025-07-30T23:59:59+04:00");
+  const timelineStart = new Date("2025-07-27T00:00:00+04:00");
+  const timelineEnd = new Date("2025-07-28T23:59:59+04:00");
+  const timelineDuration = timelineEnd - timelineStart;
 
-    // Define day-ahead and intra-day windows
-const dayAheadStart = new Date("2025-07-29T00:00:00+04:00");
-const dayAheadEnd = new Date("2025-07-29T23:59:59+04:00");
+// Split between Day-Ahead and Intra-Day: midnight of 28th
+const splitTime = new Date("2025-07-28T00:00:00+04:00");
+const splitPercent = ((splitTime - timelineStart) / timelineDuration) * 100;
 
-const intraDayStart = new Date("2025-07-30T00:00:00+04:00");
-const intraDayEnd = new Date("2025-07-30T23:59:59+04:00");
-      const timelineDuration = timelineEnd - timelineStart;
+// Divider
+const divider = document.getElementById("timeline-divider");
+divider.style.left = `${splitPercent}%`;
 
-// Convert to percentage widths based on full timeline
-const dayAheadStartPercent = ((dayAheadStart - timelineStart) / timelineDuration) * 100;
-const dayAheadEndPercent = ((dayAheadEnd - timelineStart) / timelineDuration) * 100;
-
-const intraDayStartPercent = ((intraDayStart - timelineStart) / timelineDuration) * 100;
-const intraDayEndPercent = ((intraDayEnd - timelineStart) / timelineDuration) * 100;
-
-// Apply to DOM
-const shadeDayAhead = document.getElementById("shade-dayahead");
-shadeDayAhead.style.left = `${dayAheadStartPercent}%`;
-shadeDayAhead.style.width = `${dayAheadEndPercent - dayAheadStartPercent}%`;
-
-const shadeIntraDay = document.getElementById("shade-intraday");
-shadeIntraDay.style.left = `${intraDayStartPercent}%`;
-shadeIntraDay.style.width = `${intraDayEndPercent - intraDayStartPercent}%`;
-
+// Labels
+document.getElementById("label-dayahead").style.left = `${splitPercent / 2}%`;
+document.getElementById("label-intraday").style.left = ${(splitPercent + (100 - splitPercent) / 2)}%`;
 
     
-
+    
 
     const standbyStartPercent = ((standbyTime - timelineStart) / timelineDuration) * 100;
 const activationStartPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
@@ -489,10 +468,6 @@ standbyActivationShade.style.width = `${activationEndPercent - standbyStartPerce
 document.getElementById("label-standby").style.left = `${(standbyStartPercent + activationStartPercent) / 2 - 1}%`;
 document.getElementById("label-activation").style.left = `${(activationStartPercent + eventStartPercent) / 2 - 1}%`;
 document.getElementById("label-event").style.left = `${(eventStartPercent + eventEndPercent) / 2 - 1}%`;
-
-    document.getElementById("label-dayahead").style.left = `${(dayAheadStartPercent + dayAheadEndPercent) / 2}%`;
-document.getElementById("label-intraday").style.left = `${(intraDayStartPercent + intraDayEndPercent) / 2}%`;
-
 
 
     
