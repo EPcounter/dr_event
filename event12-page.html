@@ -308,7 +308,8 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
 .timeline-labels .hover-zone span {
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+
 }
 
 #standby-activation-shade:hover ~ .timeline-labels #zone-standby span,
@@ -318,6 +319,27 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   opacity: 1;
 }
 
+    #dayahead-border,
+#intraday-border {
+  position: absolute;
+  top: -6px; /* slightly above the timeline */
+  height: 18px; /* covers timeline and ticks */
+  width: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* subtle white border */
+  border-radius: 6px;
+  pointer-events: none; /* so they don’t interfere with hovers */
+  z-index: 0;
+}
+
+#dayahead-border {
+  left: 0;
+}
+
+#intraday-border {
+  left: 50%;
+}
+
+    
   </style>
 </head>
 <body>
@@ -348,6 +370,9 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
 
   <!-- Timeline track with shades, progress, ticks -->
   <div class="timeline-track">
+    <div id="dayahead-border"></div>
+<div id="intraday-border"></div>
+
     <div id="standby-activation-shade"></div>
     <div id="activation-event-shade"></div>
     <div id="event-window-shade"></div>
