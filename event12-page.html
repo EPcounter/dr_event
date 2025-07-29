@@ -668,6 +668,26 @@ if (now >= timelineStart && now <= timelineEnd) {
   document.getElementById("label-event").style.color = now > eventStart ? (now < eventEnd ? "red" : "#777") : "#fff";
 }
 
+    function setupLabelHover(shadeId, zoneId) {
+  const shade = document.getElementById(shadeId);
+  const zone = document.getElementById(zoneId);
+  const label = zone.querySelector("span");
+
+  shade.addEventListener("mouseenter", () => {
+    label.style.visibility = "visible";
+    label.style.opacity = "1";
+  });
+
+  shade.addEventListener("mouseleave", () => {
+    label.style.visibility = "hidden";
+    label.style.opacity = "0";
+  });
+}
+
+// Apply hover behavior for all shaded regions
+setupLabelHover("standby-activation-shade", "zone-standby");
+setupLabelHover("activation-event-shade", "zone-activation");
+setupLabelHover("event-window-shade", "zone-event");
 
     setInterval(updateCountdowns, 1000);
     updateCountdowns();
