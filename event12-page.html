@@ -452,6 +452,7 @@ const dayAheadEnd = new Date("2025-07-29T23:59:59+04:00");
 
 const intraDayStart = new Date("2025-07-30T00:00:00+04:00");
 const intraDayEnd = new Date("2025-07-30T23:59:59+04:00");
+      const timelineDuration = timelineEnd - timelineStart;
 
 // Convert to percentage widths based on full timeline
 const dayAheadStartPercent = ((dayAheadStart - timelineStart) / timelineDuration) * 100;
@@ -471,7 +472,7 @@ shadeIntraDay.style.width = `${intraDayEndPercent - intraDayStartPercent}%`;
 
 
     
-  const timelineDuration = timelineEnd - timelineStart;
+
 
     const standbyStartPercent = ((standbyTime - timelineStart) / timelineDuration) * 100;
 const activationStartPercent = ((activationTime - timelineStart) / timelineDuration) * 100;
