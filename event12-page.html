@@ -286,11 +286,10 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   z-index: 1;
 }
 
-    .timeline-labels-top {
+.timeline-labels-top {
   position: relative;
-  height: 20px;
-  margin-bottom: 2px;
-  margin-top: -6px; /* pulls closer to top if needed */
+  height: 30px;
+  margin-bottom: 6px;
 }
 
 .timeline-labels-top span {
@@ -359,13 +358,17 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   box-shadow: 0 0 8px 3px rgba(255, 140, 0, 0.5); /* orange glow */
 }
 .label-box {
+  position: absolute; /* 👈 Important */
   display: inline-block;
   padding: 4px 10px;
   border: 1px solid transparent;
   border-radius: 6px;
   transition: all 0.3s ease;
   cursor: pointer;
+  text-align: center;
+  transform: translateX(-50%); /* Center over left% */
 }
+
 
 .label-box:hover {
   animation: pulseGlow 1.5s infinite;
