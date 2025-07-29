@@ -238,7 +238,7 @@
     #event-window-shade {
   position: absolute;
   height: 6px;
-/*  background-color: rgba(231, 76, 60, 0.3); /* soft red */
+/* background-color: rgba(231, 76, 60, 0.3); */ /* soft red */
 background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
       top: 0;
   border-radius: 4px;
@@ -358,6 +358,40 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   animation: pulseOnHover 1.5s infinite;
   box-shadow: 0 0 8px 3px rgba(255, 140, 0, 0.5); /* orange glow */
 }
+.label-box {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.label-box:hover {
+  animation: pulseGlow 1.6s infinite;
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 8px 3px rgba(255, 255, 255, 0.4);
+}
+    .label-box:hover span {
+  color: #fff;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.2); }
+  50% { box-shadow: 0 0 12px 6px rgba(255, 255, 255, 0.5); }
+  100% { box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.2); }
+}
+
+#dayahead-border,
+#intraday-border {
+  transition: box-shadow 0.3s ease;
+}
+
+.label-box#box-dayahead:hover ~ .timeline-track #dayahead-border,
+.label-box#box-intraday:hover ~ .timeline-track #intraday-border {
+  box-shadow: 0 0 12px 4px rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
+}
 
     
   </style>
@@ -370,8 +404,9 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   
   <!-- First row: Day-Ahead and Intra-Day -->
   <div class="timeline-labels-top">
-    <span id="label-dayahead">📅 Day-Ahead</span>
-    <span id="label-intraday">🕘 Intra-Day</span>
+<div id="box-dayahead" class="label-box"><span id="label-dayahead">📅 Day-Ahead</span></div>
+<div id="box-intraday" class="label-box"><span id="label-intraday">🕘 Intra-Day</span></div>
+
   </div>
 
 <!-- Second row: Standby, Activation, Event -->
@@ -540,8 +575,6 @@ divider.style.left = `${splitPercent}%`;
 
 // Labels
 
-document.getElementById("label-dayahead").style.left = `${splitPercent / 2 - 1}%`;
-document.getElementById("label-intraday").style.left = `${(splitPercent + (100 - splitPercent) / 2 + 1)}%`;
 
     
     
@@ -562,6 +595,8 @@ document.getElementById("zone-standby").style.left = `${(standbyStartPercent + a
 document.getElementById("zone-activation").style.left = `${(activationStartPercent + eventStartPercent) / 2 - 1}%`;
 document.getElementById("zone-event").style.left = `${(eventStartPercent + eventEndPercent) / 2 - 1}%`;
 
+document.getElementById("box-dayahead").style.left = `${splitPercent / 2 - 1}%`;
+document.getElementById("box-intraday").style.left = `${(splitPercent + (100 - splitPercent) / 2 + 1)}%`;
 
 
     
