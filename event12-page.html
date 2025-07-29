@@ -285,7 +285,21 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   z-index: 1;
 }
 
-    
+    .timeline-labels-top {
+  position: relative;
+  height: 20px;
+  margin-bottom: 2px;
+  margin-top: -6px; /* pulls closer to top if needed */
+}
+
+.timeline-labels-top span {
+  font-size: 11px;
+  color: #aaa;
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
   </style>
 </head>
 <body>
@@ -293,10 +307,17 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
 
   <!-- Timeline -->
   <div class="timeline-box">
-  <div class="timeline-labels">
-    <span id="label-dayahead">📅 Day-Ahead</span>
-<span id="label-intraday">🕘 Intra-Day</span>
 
+    
+  <div class="timeline-labels">
+    <!-- First row: Day-Ahead and Intra-Day -->
+  <div class="timeline-labels timeline-labels-top">
+    <span id="label-dayahead">📅 Day-Ahead</span>
+    <span id="label-intraday">🕘 Intra-Day</span>
+  </div>
+
+  <!-- Second row: Standby, Activation, Event -->
+  <div class="timeline-labels">
     <span id="label-standby">📣 Standby</span>
     <span id="label-activation">📣 Activation</span>
     <span id="label-event">⚡Event</span>
