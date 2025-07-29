@@ -306,12 +306,10 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
 
 
   <!-- Timeline -->
-  <div class="timeline-box">
-
-    
-  <div class="timeline-labels">
-    <!-- First row: Day-Ahead and Intra-Day -->
-  <div class="timeline-labels timeline-labels-top">
+ <div class="timeline-box">
+  
+  <!-- First row: Day-Ahead and Intra-Day -->
+  <div class="timeline-labels-top">
     <span id="label-dayahead">📅 Day-Ahead</span>
     <span id="label-intraday">🕘 Intra-Day</span>
   </div>
@@ -322,24 +320,27 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
     <span id="label-activation">📣 Activation</span>
     <span id="label-event">⚡Event</span>
   </div>
+
+  <!-- Timeline track with shades, progress, ticks -->
   <div class="timeline-track">
-      <div id="standby-activation-shade"></div>
-      <div id="activation-event-shade"></div>
-      <div id="event-window-shade"></div> <!-- ← Add this -->
-      <div id="timeline-progress"></div>
-      <div class="timeline-now-marker">NOW</div>
+    <div id="standby-activation-shade"></div>
+    <div id="activation-event-shade"></div>
+    <div id="event-window-shade"></div>
+    <div id="timeline-progress"></div>
+    <div class="timeline-now-marker">NOW</div>
     <div id="timeline-divider"></div>
 
-
     <!-- Tick markers -->
-  <div class="timeline-tick"><span id="tick-time-start">--</span></div>
-<div class="timeline-tick"><span id="tick-time-standby">--</span></div>
-<div class="timeline-tick"><span id="tick-time-activation">--</span></div>
-<div class="timeline-tick"><span id="tick-time-event">--</span></div>
-<div class="timeline-tick"><span id="tick-time-end">--</span></div>
-<div class="timeline-tick"><span id="tick-time-finish">--</span></div>
+    <div class="timeline-tick"><span id="tick-time-start">--</span></div>
+    <div class="timeline-tick"><span id="tick-time-standby">--</span></div>
+    <div class="timeline-tick"><span id="tick-time-activation">--</span></div>
+    <div class="timeline-tick"><span id="tick-time-event">--</span></div>
+    <div class="timeline-tick"><span id="tick-time-end">--</span></div>
+    <div class="timeline-tick"><span id="tick-time-finish">--</span></div>
   </div>
+
 </div>
+
 
 
   
