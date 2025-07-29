@@ -490,7 +490,7 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
     <div id="intraday-border"></div>
 
     <div id="so-notify-line" class="so-marker-line"></div>
-    <div id="so-notify-label" class="so-marker-label">📩 SO Notified</div>
+
     
     <div id="standby-activation-shade"></div>
     <div id="activation-event-shade"></div>
@@ -725,7 +725,7 @@ soMarkerTimes.forEach((notifyTime, index) => {
   const label = document.createElement("div");
   label.className = "so-marker-label";
   label.style.left = `${percent}%`;
-  label.textContent = "📩 10AM SO";
+  label.textContent = "📩 10 AM - EWEC";
 
   // Append
   document.querySelector(".timeline-track").appendChild(line);
