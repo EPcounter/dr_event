@@ -300,6 +300,24 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   white-space: nowrap;
 }
 
+    .timeline-labels .hover-zone {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.timeline-labels .hover-zone span {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#standby-activation-shade:hover ~ .timeline-labels #zone-standby span,
+#activation-event-shade:hover ~ .timeline-labels #zone-activation span,
+#event-window-shade:hover ~ .timeline-labels #zone-event span {
+  visibility: visible;
+  opacity: 1;
+}
+
   </style>
 </head>
 <body>
@@ -314,12 +332,19 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
     <span id="label-intraday">🕘 Intra-Day</span>
   </div>
 
-  <!-- Second row: Standby, Activation, Event -->
-  <div class="timeline-labels">
+<!-- Second row: Standby, Activation, Event -->
+<div class="timeline-labels">
+  <div class="hover-zone" id="zone-standby">
     <span id="label-standby">📣 Standby</span>
+  </div>
+  <div class="hover-zone" id="zone-activation">
     <span id="label-activation">📣 Activation</span>
+  </div>
+  <div class="hover-zone" id="zone-event">
     <span id="label-event">⚡Event</span>
   </div>
+</div>
+
 
   <!-- Timeline track with shades, progress, ticks -->
   <div class="timeline-track">
@@ -488,9 +513,10 @@ standbyActivationShade.style.left = `${standbyStartPercent}%`;
 standbyActivationShade.style.width = `${activationEndPercent - standbyStartPercent}%`;
 
 // Center each label above its shaded area
-document.getElementById("label-standby").style.left = `${(standbyStartPercent + activationStartPercent) / 2 - 1}%`;
-document.getElementById("label-activation").style.left = `${(activationStartPercent + eventStartPercent) / 2 - 1}%`;
-document.getElementById("label-event").style.left = `${(eventStartPercent + eventEndPercent) / 2 - 1}%`;
+document.getElementById("zone-standby").style.left = `${(standbyStartPercent + activationStartPercent) / 2 - 1}%`;
+document.getElementById("zone-activation").style.left = `${(activationStartPercent + eventStartPercent) / 2 - 1}%`;
+document.getElementById("zone-event").style.left = `${(eventStartPercent + eventEndPercent) / 2 - 1}%`;
+
 
 
     
