@@ -359,6 +359,38 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   box-shadow: 0 0 8px 3px rgba(255, 140, 0, 0.5); /* orange glow */
 }
 
+.label-box {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.label-box:hover {
+  animation: pulseGlow 1.6s infinite;
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 8px 3px rgba(255, 255, 255, 0.4);
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.2); }
+  50% { box-shadow: 0 0 12px 5px rgba(255, 255, 255, 0.5); }
+  100% { box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.2); }
+}
+#box-dayahead:hover {
+  border-color: rgba(100, 200, 255, 0.4);
+  box-shadow: 0 0 10px 4px rgba(100, 200, 255, 0.4); /* Light blue */
+}
+
+#box-intraday:hover {
+  border-color: rgba(255, 180, 80, 0.4);
+  box-shadow: 0 0 10px 4px rgba(255, 180, 80, 0.4); /* Light amber */
+}
+
+
+
     
   </style>
 </head>
@@ -370,9 +402,14 @@ background-color: rgba(255, 50, 50, 0.6); /* brighter red with more opacity */
   
   <!-- First row: Day-Ahead and Intra-Day -->
   <div class="timeline-labels-top">
+  <div class="label-box" id="box-dayahead">
     <span id="label-dayahead">📅 Day-Ahead</span>
+  </div>
+  <div class="label-box" id="box-intraday">
     <span id="label-intraday">🕘 Intra-Day</span>
   </div>
+</div>
+
 
 <!-- Second row: Standby, Activation, Event -->
 <div class="timeline-labels">
