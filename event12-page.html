@@ -709,7 +709,7 @@ ticks[5].style.left = `100%`; // End of timeline
 const soMarkerTimes = [];
 const currentDay = new Date(timelineStart);
 while (currentDay <= timelineEnd) {
-  const notifyTime = new Date(currentDay);
+const notifyTime = new Date(currentDay.getTime());
   notifyTime.setHours(10, 0, 0, 0); // Set time to 10:00 AM
   if (notifyTime >= timelineStart && notifyTime <= timelineEnd) {
     soMarkerTimes.push(new Date(notifyTime));
