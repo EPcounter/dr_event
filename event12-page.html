@@ -55,21 +55,17 @@
       transition: width 0.5s ease;
     }
     .timeline-now-marker {
-      position: absolute;
-      top: -8px; /* adjust height above the timeline */
-      font-size: 14px;
-      color: #f39c12;
-      transform: translateX(-50%);
-      pointer-events: none;
-      
-     /* font-size: 10px;
-      background: #f39c12;
-      color: #000;
-      padding: 1px 4px;
-      border-radius: 3px;
-      transform: translateX(-50%);
-      white-space: nowrap; */
-    }
+  position: absolute;
+  top: -8px; /* Adjust vertically as needed */
+  left: 0;
+  font-size: 14px;
+  color: #f39c12;
+  transform: translateX(-50%);
+  pointer-events: none;
+  font-weight: bold;
+  z-index: 10;
+}
+
 
     /* Countdown widget styles */
     .widget-row {
@@ -818,7 +814,7 @@ progressBar.style.width = `${progressWidthPercent}%`;
 if (now >= timelineStart && now <= timelineEnd) {
   marker.style.display = "block";
   marker.style.left = `${absoluteNowPercent}%`;
-  marker.textContent = "NOW";
+  marker.textContent = "▼";
 } else {
   marker.style.display = "none";
 }
