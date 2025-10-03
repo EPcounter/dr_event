@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DR Event • Radial Clock</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161a22; --muted:#8b93a7; --text:#e9eefb;
+    --standby:#f5d76e; --activation:#ff9f43; --event:#ff5252; --now:#00c2ff;
+    --tick:#2b3242; --ring:#222735; --ok:#2ecc71; --warn:#f5d76e;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .wrap{max-width:1100px; width:100%; display:grid; gap:16px; grid-template-columns: 520px 1fr;}
+  .card{background:var(--panel); border:1px solid #1e2430; border-radius:14px; padding:16px;}
+  h1{font-size:18px; margin:0 0 8px 0}
+  .muted{color:var(--muted); font-size:12px}
+  .legend{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px}
+  .chip{display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:4px 8px; border-radius:999px; background:#121621; border:1px solid #222a38}
+  .dot{width:10px; height:10px; border-radius:50%}
+  .dot.standby{background:var(--standby)}
+  .dot.activation{background:var(--activation)}
+  .dot.event{background:var(--event)}
+  .dot.now{background:var(--now)}
+  .clock-wrap{display:flex; align-items:center; justify-content:center}
+  svg{overflow:visible; display:block}
+  /* tooltip */
+  .tip{position:absolute; pointer-events:none; background:#0b0f16; border:1px solid #283042; padding:8px 10px; border-radius:8px; font-size:12px; color:var(--text); box-shadow:0 6px 18px rgba(0,0,0,.35); opacity:0; transform:translate(-50%,-120%); transition:opacity .15s}
+  .kpis{display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:10px; margin-top:8px}
+  .kpi{background:#121621; border:1px solid #20283a; border-radius:12px; padding:10px}
+  .kpi .label{font-size:11px; color:var(--muted)}
+  .kpi .value{font-size:20px; font-weight:700}
+  .footer{font-size:12px; color:var(--muted); margin-top:8px}
+  .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .badge{font-size:11px; padding:4px 8px; border-radius:999px; background:#101520; border:1px solid #243049}
+  .good{color:var(--ok)}
+  .warn{color:var(--warn)}
+  @media (max-width:980px){ .wrap{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Radial Event Clock</h1>
+    <div class="muted">Standby → Activation → Event shown as arcs on a 24-hour dial (Asia/Dubai). The hand is “now”.</div>
+    <div class="legend">
+      <span class="chip"><span class="dot standby"></span>Standby</span>
+      <span class="chip"><span class="dot activation"></span>Activation</span>
+      <span class="chip"><span class="dot event"></span>Event</span>
+      <span class="chip"><span class="dot now"></span>Now</span>
+    </div>
+    <div class="clock-wrap" id="clock-host" style="position:relative; margin-top:8px;">
+      <!-- SVG injected here -->
+      <div class="tip" id="tip"></div>
+    </div>
+    <div class="footer" id="footerText">—</div>
+  </div>
+
+  <div class="card">
+    <h1>Event Summary</h1>
+    <div class="kpis">
+      <div class="kpi"><div class="label">Event Window</div><div class="value" id="k_event">—</div></div>
+      <div class="kpi"><div class="label">Lead Time (Activation → Start)</div><div class="value" id="k_lead">—</div></div>
+      <div class="kpi"><div class="label">Standby Lead (Standby → Activation)</div><div class="value" id="k_sb">—</div></div>
+      <div class="kpi"><div class="label">Now (Asia/Dubai)</div><div class="value" id="k_now">—</div></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="badge" id="b_status">Status: —</span>
+      <span class="badge" id="b_day">Day: —</span>
+      <span class="badge" id="b_method">Baseline: IDAF-ready</span>
+    </div>
+    <div class="footer">Tip: Hover arcs for exact timestamps; the outer ticks mark hours (small) and 0/6/12/18h (labeled).</div>
+  </div>
+</div>
+
+<script>
+/** ====== CONFIG (editable / URL-overridable) ====== **/
+const cfg = {
+  tz: "Asia/Dubai",
+  eventId: 3,
+  useCase: "Peak Demand — 24h Notice",
+  times: {
+    standby:   "2025-07-02T13:00:00+04:00",
+    activation:"2025-07-03T09:00:00+04:00",
+    start:     "2025-07-03T13:00:00+04:00",
+    end:       "2025-07-03T17:00:00+04:00"
+  },
+  // The dial spans this calendar day
+  dayStart:   "2025-07-03T00:00:00+04:00",
+  dayEnd:     "2025-07-03T23:59:59+04:00"
+};
+
+// URL params override: start,end,activation,standby,dayStart,dayEnd
+(function applyURLOverrides(){
+  const p = new URLSearchParams(location.search);
+  const t = cfg.times;
+  if (p.get("standby"))    t.standby = p.get("standby");
+  if (p.get("activation")) t.activation = p.get("activation");
+  if (p.get("start"))      t.start = p.get("start");
+  if (p.get("end"))        t.end = p.get("end");
+  if (p.get("dayStart"))   cfg.dayStart = p.get("dayStart");
+  if (p.get("dayEnd"))     cfg.dayEnd = p.get("dayEnd");
+})();
+
+/** ====== TIME UTILS ====== **/
+const fmtTime = (d, opts={}) =>
+  new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, hour12:true, hour:'numeric', minute:'2-digit', ...opts }).format(d);
+const fmtDate = (d) =>
+  new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, weekday:'short', year:'numeric', month:'short', day:'2-digit' }).format(d);
+
+// Parse ISO as local-in-tz by letting Date do offset math in the string
+const toDate = (iso) => new Date(iso);
+// Now in target tz (derive via Intl parts)
+function nowInTZ(){
+  const now = new Date();
+  // Get the time in target TZ by formatting and reparsing pieces
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: cfg.tz, year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+  }).formatToParts(now).reduce((o,p)=> (o[p.type]=p.value,o), {});
+  return new Date(`${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`);
+}
+
+// map date → angle on 24h dial (0° at midnight at top, clockwise)
+function angleFor(d, dayStart, dayEnd){
+  const span = dayEnd - dayStart;
+  const clamped = Math.max(dayStart, Math.min(d, dayEnd));
+  const t = (clamped - dayStart) / span; // 0..1
+  // 0 at top (12 o'clock), clockwise (SVG 0° points along +X so subtract 90)
+  return (t * 360) - 90;
+}
+
+/** ====== SVG UTILS ====== **/
+// polar → cartesian
+function pc(cx, cy, r, deg){
+  const rad = (deg * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+// donut arc path (outer arc + inner arc back)
+function arcPath(cx, cy, rOuter, thickness, a0, a1){
+  const rInner = rOuter - thickness;
+  const p0 = pc(cx, cy, rOuter, a0), p1 = pc(cx, cy, rOuter, a1);
+  const q1 = pc(cx, cy, rInner, a1), q0 = pc(cx, cy, rInner, a0);
+  const large = Math.abs(a1 - a0) % 360 > 180 ? 1 : 0;
+  const sweep = a1 > a0 ? 1 : 0;
+  return [
+    `M ${p0.x} ${p0.y}`,
+    `A ${rOuter} ${rOuter} 0 ${large} ${sweep} ${p1.x} ${p1.y}`,
+    `L ${q1.x} ${q1.y}`,
+    `A ${rInner} ${rInner} 0 ${large} ${sweep ^ 1} ${q0.x} ${q0.y}`,
+    'Z'
+  ].join(' ');
+}
+
+/** ====== DRAW ====== **/
+const host = document.getElementById('clock-host');
+const tip  = document.getElementById('tip');
+const W = 460, H = 460, CX = W/2, CY = H/2;
+const R_OUT = 180;
+const THK  = 18;
+const GAP  = 6;
+
+const svgNS = "http://www.w3.org/2000/svg";
+const svg = document.createElementNS(svgNS, "svg");
+svg.setAttribute("width", W);
+svg.setAttribute("height", H);
+host.prepend(svg);
+
+// Back ring + ticks
+function drawBase(){
+  // base ring
+  const base = document.createElementNS(svgNS,'circle');
+  base.setAttribute('cx', CX); base.setAttribute('cy', CY);
+  base.setAttribute('r', R_OUT + 6);
+  base.setAttribute('fill','none');
+  base.setAttribute('stroke','var(--ring)');
+  base.setAttribute('stroke-width','12');
+  svg.appendChild(base);
+
+  // hour ticks
+  for(let h=0; h<24; h++){
+    const angle = (h/24)*360 - 90;
+    const r1 = R_OUT + 10;
+    const major = (h%6===0);
+    const r2 = r1 + (major ? 14 : 8);
+    const p1 = pc(CX,CY,r1,angle);
+    const p2 = pc(CX,CY,r2,angle);
+
+    const line = document.createElementNS(svgNS,'line');
+    line.setAttribute('x1',p1.x); line.setAttribute('y1',p1.y);
+    line.setAttribute('x2',p2.x); line.setAttribute('y2',p2.y);
+    line.setAttribute('stroke','var(--tick)');
+    line.setAttribute('stroke-width', major ? 2 : 1);
+    svg.appendChild(line);
+
+    if(major){
+      const t = document.createElementNS(svgNS,'text');
+      const label = h.toString().padStart(2,'0');
+      const tp = pc(CX,CY,r2+14,angle);
+      t.textContent = label;
+      t.setAttribute('x', tp.x);
+      t.setAttribute('y', tp.y);
+      t.setAttribute('fill', 'var(--muted)');
+      t.setAttribute('font-size','10');
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('dominant-baseline','middle');
+      svg.appendChild(t);
+    }
+  }
+}
+
+// Arcs
+function addArc(rOuter, color, a0, a1, label){
+  const g = document.createElementNS(svgNS,'g');
+  const path = document.createElementNS(svgNS,'path');
+  path.setAttribute('d', arcPath(CX,CY,rOuter,THK,a0,a1));
+  path.setAttribute('fill', color);
+  path.setAttribute('fill-opacity','0.85');
+  path.setAttribute('stroke','rgba(255,255,255,0.06)');
+  path.setAttribute('stroke-width','1');
+  path.style.cursor = 'pointer';
+  path.addEventListener('mousemove', (e)=>{
+    tip.style.opacity = 1;
+    tip.style.left = e.clientX + 'px';
+    tip.style.top  = e.clientY + 'px';
+  });
+  path.addEventListener('mouseleave', ()=> tip.style.opacity = 0 );
+  g.appendChild(path);
+
+  // label near arc midpoint
+  const mid = (a0 + a1)/2;
+  const lp = pc(CX,CY,rOuter - THK/2, mid);
+  const text = document.createElementNS(svgNS,'text');
+  text.textContent = label;
+  text.setAttribute('x', lp.x);
+  text.setAttribute('y', lp.y);
+  text.setAttribute('fill','#0a0a0a');
+  text.setAttribute('font-size','10');
+  text.setAttribute('font-weight','700');
+  text.setAttribute('text-anchor','middle');
+  text.setAttribute('dominant-baseline','middle');
+  // subtle contrast pill behind text
+  const pill = document.createElementNS(svgNS,'rect');
+  const padX=6, padY=3;
+  const tw = label.length * 6.2 + padX*2;
+  const th = 14;
+  pill.setAttribute('x', lp.x - tw/2);
+  pill.setAttribute('y', lp.y - th/2);
+  pill.setAttribute('rx', 7); pill.setAttribute('ry', 7);
+  pill.setAttribute('width', tw); pill.setAttribute('height', th);
+  pill.setAttribute('fill','rgba(255,255,255,0.18)');
+  pill.setAttribute('stroke','rgba(0,0,0,0.15)');
+  g.appendChild(pill); g.appendChild(text);
+
+  svg.appendChild(g);
+  return { path, labelNode:text, pillNode:pill };
+}
+
+// Now hand
+function addNowHand(){
+  const g = document.createElementNS(svgNS,'g');
+  const hand = document.createElementNS(svgNS,'line');
+  hand.setAttribute('x1',CX); hand.setAttribute('y1',CY);
+  const tip = pc(CX,CY,R_OUT, -90); // init
+  hand.setAttribute('x2',tip.x); hand.setAttribute('y2',tip.y);
+  hand.setAttribute('stroke','var(--now)');
+  hand.setAttribute('stroke-width','3');
+  hand.setAttribute('stroke-linecap','round');
+
+  const knob = document.createElementNS(svgNS,'circle');
+  knob.setAttribute('cx',CX); knob.setAttribute('cy',CY);
+  knob.setAttribute('r',5); knob.setAttribute('fill','var(--now)');
+
+  const halo = document.createElementNS(svgNS,'circle');
+  halo.setAttribute('cx',CX); halo.setAttribute('cy',CY);
+  halo.setAttribute('r',8); halo.setAttribute('fill','none');
+  halo.setAttribute('stroke','rgba(0,194,255,0.5)');
+  halo.setAttribute('stroke-width','2');
+
+  g.appendChild(hand); g.appendChild(knob); g.appendChild(halo);
+  svg.appendChild(g);
+  return { hand };
+}
+
+/** ====== LAYOUT + STATE ====== **/
+drawBase();
+
+const T = {
+  standby: toDate(cfg.times.standby),
+  activation: toDate(cfg.times.activation),
+  start: toDate(cfg.times.start),
+  end: toDate(cfg.times.end),
+  dayStart: toDate(cfg.dayStart),
+  dayEnd: toDate(cfg.dayEnd)
+};
+
+// Compute angles for arcs (clamped to dial day)
+const a = {
+  standby0: angleFor(T.standby, T.dayStart, T.dayEnd),
+  standby1: angleFor(T.activation, T.dayStart, T.dayEnd),
+  act0:     angleFor(T.activation, T.dayStart, T.dayEnd),
+  act1:     angleFor(T.start, T.dayStart, T.dayEnd),
+  evt0:     angleFor(T.start, T.dayStart, T.dayEnd),
+  evt1:     angleFor(T.end, T.dayStart, T.dayEnd),
+};
+
+const standbyArc   = addArc(R_OUT - 0*(THK+GAP), 'var(--standby)',   a.standby0, a.standby1, 'Standby');
+const activationArc= addArc(R_OUT - 1*(THK+GAP), 'var(--activation)',a.act0,     a.act1,     'Activation');
+const eventArc     = addArc(R_OUT - 2*(THK+GAP), 'var(--event)',     a.evt0,     a.evt1,     'Event');
+
+const nowHand = addNowHand();
+
+/** ====== TOOLTIP CONTENT ====== **/
+function setTip(html){ tip.innerHTML = html; }
+function hoverBinder(el, title, start, end){
+  el.addEventListener('mouseenter', ()=>{
+    setTip(`<strong>${title}</strong><br>${fmtTime(start)} → ${fmtTime(end)}<br><span class="muted">${fmtDate(start)}</span>`);
+  });
+}
+hoverBinder(standbyArc.path,   'Standby',    T.standby, T.activation);
+hoverBinder(activationArc.path,'Activation', T.activation, T.start);
+hoverBinder(eventArc.path,     'Event',      T.start, T.end);
+
+/** ====== KPIs & STATUS ====== **/
+function durFmt(ms){
+  const m = Math.round(ms/60000);
+  const h = Math.floor(m/60), mm = m%60;
+  return `${h}h ${mm}m`;
+}
+document.getElementById('k_event').textContent = `${fmtTime(T.start)} – ${fmtTime(T.end)} (${durFmt(T.end - T.start)})`;
+document.getElementById('k_lead').textContent  = durFmt(T.start - T.activation);
+document.getElementById('k_sb').textContent    = durFmt(T.activation - T.standby);
+document.getElementById('b_day').textContent   = `Dial Day: ${fmtDate(T.dayStart)}`;
+
+/** ====== LIVE UPDATE ====== **/
+function update(){
+  const now = nowInTZ();
+  const ang = angleFor(now, T.dayStart, T.dayEnd);
+  const tipP = pc(CX,CY,R_OUT-2, ang);
+  nowHand.hand.setAttribute('x2', tipP.x);
+  nowHand.hand.setAttribute('y2', tipP.y);
+
+  const inStandby   = now >= T.standby && now < T.activation;
+  const inActivation= now >= T.activation && now < T.start;
+  const inEvent     = now >= T.start && now < T.end;
+  const ended       = now >= T.end;
+  const before      = now < T.standby;
+
+  const b = document.getElementById('b_status');
+  if (before)        { b.textContent = 'Status: Planned'; b.className='badge'; }
+  else if (inStandby){ b.textContent = 'Status: Upcoming (Standby)'; b.className='badge warn'; }
+  else if (inActivation){ b.textContent = 'Status: Preparing (Activation)'; b.className='badge warn'; }
+  else if (inEvent)  { b.textContent = 'Status: LIVE'; b.className='badge good'; }
+  else if (ended)    { b.textContent = 'Status: Ended'; b.className='badge'; }
+
+  document.getElementById('k_now').textContent = `${fmtDate(now)}, ${fmtTime(now)}`;
+  document.getElementById('footerText').textContent =
+    `Event #${cfg.eventId} • ${cfg.useCase} • TZ: ${cfg.tz}`;
+}
+update();
+setInterval(update, 1000);
+</script>
+</body>
+</html>
