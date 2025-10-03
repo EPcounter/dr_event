@@ -1,1 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DR Event • Radial Clock (Historic)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161a22; --muted:#8b93a7; --text:#e9eefb;
+    --standby:#f5d76e; --activation:#ff9f43; --event:#ff5252;
+    --tick:#2b3242; --ring:#222735;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .wrap{max-width:980px; width:100%; display:grid; gap:16px; grid-template-columns: 520px 1fr;}
+  .card{background:var(--panel); border:1px solid #1e2430; border-radius:14px; padding:16px;}
+  h1{font-size:18px; margin:0 0 8px}
+  .muted{color:var(--muted); font-size:12px}
+  .legend{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px}
+  .chip{display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:4px 8px; border-radius:999px; background:#121621; border:1px solid #222a38}
+  .dot{width:10px; height:10px; border-radius:50%}
+  .dot.standby{background:var(--standby)}
+  .dot.activation{background:var(--activation)}
+  .dot.event{background:var(--event)}
+  .clock-wrap{display:flex; align-items:center; justify-content:center; position:relative}
+  svg{overflow:visible; display:block}
+  /* tooltip */
+  .tip{position:absolute; pointer-events:none; background:#0b0f16; border:1px solid #283042; padding:8px 10px; border-radius:8px; font-size:12px; color:var(--text); box-shadow:0 6px 18px rgba(0,0,0,.35); opacity:0; transform:translate(-50%,-120%); transition:opacity .12s}
+  .kpis{display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:10px; margin-top:8px}
+  .kpi{background:#121621; border:1px solid #20283a; border-radius:12px; padding:10px}
+  .kpi .label{font-size:11px; color:var(--muted)}
+  .kpi .value{font-size:20px; font-weight:700}
+  .footer{font-size:12px; color:var(--muted); margin-top:8px}
+  @media (max-width:900px){ .wrap{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Radial Event Clock (Historic)</h1>
+    <div class="muted">Completed event phases shown as a single aligned ring on a 24-hour dial (Asia/Dubai). Hover for details.</div>
+    <div class="legend">
+      <span class="chip"><span class="dot standby"></span>Standby → Activation</span>
+      <span class="chip"><span class="dot activation"></span>Activation → Start</span>
+      <span class="chip"><span class="dot event"></span>Event Window</span>
+    </div>
+    <div class="clock-wrap" id="clock-host" style="margin-top:8px;">
+      <!-- SVG injected here -->
+      <div class="tip" id="tip"></div>
+    </div>
+    <div class="footer" id="footerText">—</div>
+  </div>
+
+  <div class="card">
+    <h1>Event Summary</h1>
+    <div class="kpis">
+      <div class="kpi"><div class="label">Event Window</div><div class="value" id="k_event">—</div></div>
+      <div class="kpi"><div class="label">Lead Time (Activation → Start)</div><div class="value" id="k_lead">—</div></div>
+      <div class="kpi"><div class="label">Standby Lead (Standby → Activation)</div><div class="value" id="k_sb">—</div></div>
+      <div class="kpi"><div class="label">Dial Day</div><div class="value" id="k_day">—</div></div>
+    </div>
+    <div class="footer">Tip: The single ring guarantees perfectly aligned phase boundaries; outer ticks mark hours (00/06/12/18 labeled).</div>
+  </div>
+</div>
+
+<script>
+/** ====== CONFIG (editable / URL-overridable) ====== **/
+const cfg = {
+  tz: "Asia/Dubai",
+  eventId: 3,
+  useCase: "Peak Demand — 24h Notice",
+  times: {
+    standby:   "2025-07-02T13:00:00+04:00",
+    activation:"2025-07-03T09:00:00+04:00",
+    start:     "2025-07-03T13:00:00+04:00",
+    end:       "2025-07-03T17:00:00+04:00"
+  },
+  // Dial day: use the calendar day of the EVENT (you can override)
+  dayStart:   "2025-07-03T00:00:00+04:00",
+  dayEnd:     "2025-07-03T23:59:59+04:00"
+};
+
+// URL params override: start,end,activation,standby,dayStart,dayEnd
+(function applyURLOverrides(){
+  const p = new URLSearchParams(location.search);
+  const t = cfg.times;
+  if (p.get("standby"))    t.standby = p.get("standby");
+  if (p.get("activation")) t.activation = p.get("activation");
+  if (p.get("start"))      t.start = p.get("start");
+  if (p.get("end"))        t.end = p.get("end");
+  if (p.get("dayStart"))   cfg.dayStart = p.get("dayStart");
+  if (p.get("dayEnd"))     cfg.dayEnd = p.get("dayEnd");
+})();
+
+/** ====== TIME UTILS ====== **/
+const fmtTime = (d, opts={}) =>
+  new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, hour12:true, hour:'numeric', minute:'2-digit', ...opts }).format(d);
+const fmtDate = (d) =>
+  new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, weekday:'short', year:'numeric', month:'short', day:'2-digit' }).format(d);
+const toDate = (iso) => new Date(iso);
+
+/** ====== ANGLE MAP (24h dial) ====== **/
+function angleFor(d, dayStart, dayEnd){
+  const span = dayEnd - dayStart;
+  const clamped = Math.max(dayStart, Math.min(d, dayEnd));
+  const t = (clamped - dayStart) / span; // 0..1
+  return (t * 360) - 90; // 0 at top, clockwise
+}
+
+/** ====== SVG UTILS ====== **/
+const svgNS = "http://www.w3.org/2000/svg";
+const host = document.getElementById('clock-host');
+const tip  = document.getElementById('tip');
+const W = 460, H = 460, CX = W/2, CY = H/2;
+const R_OUT = 180;
+const THK  = 26; // single band thickness
+
+function pc(cx, cy, r, deg){
+  const rad = (deg * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+// donut arc path at one fixed radius (single ring)
+function arcPath(cx, cy, rOuter, thickness, a0, a1){
+  const rInner = rOuter - thickness;
+  const p0 = pc(cx, cy, rOuter, a0), p1 = pc(cx, cy, rOuter, a1);
+  const q1 = pc(cx, cy, rInner, a1), q0 = pc(cx, cy, rInner, a0);
+  const large = Math.abs((a1 - a0 + 360) % 360) > 180 ? 1 : 0;
+  const sweep = a1 > a0 ? 1 : 0;
+  return [
+    `M ${p0.x} ${p0.y}`,
+    `A ${rOuter} ${rOuter} 0 ${large} ${sweep} ${p1.x} ${p1.y}`,
+    `L ${q1.x} ${q1.y}`,
+    `A ${rInner} ${rInner} 0 ${large} ${sweep ^ 1} ${q0.x} ${q0.y}`,
+    'Z'
+  ].join(' ');
+}
+
+const svg = document.createElementNS(svgNS, "svg");
+svg.setAttribute("width", W);
+svg.setAttribute("height", H);
+host.prepend(svg);
+
+// base ring + ticks
+(function drawBase(){
+  const base = document.createElementNS(svgNS,'circle');
+  base.setAttribute('cx', CX); base.setAttribute('cy', CY);
+  base.setAttribute('r', R_OUT + 6);
+  base.setAttribute('fill','none');
+  base.setAttribute('stroke','var(--ring)');
+  base.setAttribute('stroke-width','12');
+  svg.appendChild(base);
+
+  for(let h=0; h<24; h++){
+    const angle = (h/24)*360 - 90;
+    const r1 = R_OUT + 10;
+    const major = (h%6===0);
+    const r2 = r1 + (major ? 14 : 8);
+    const p1 = pc(CX,CY,r1,angle);
+    const p2 = pc(CX,CY,r2,angle);
+    const line = document.createElementNS(svgNS,'line');
+    line.setAttribute('x1',p1.x); line.setAttribute('y1',p1.y);
+    line.setAttribute('x2',p2.x); line.setAttribute('y2',p2.y);
+    line.setAttribute('stroke','var(--tick)');
+    line.setAttribute('stroke-width', major ? 2 : 1);
+    svg.appendChild(line);
+
+    if(major){
+      const t = document.createElementNS(svgNS,'text');
+      const label = h.toString().padStart(2,'0');
+      const tp = pc(CX,CY,r2+14,angle);
+      t.textContent = label;
+      t.setAttribute('x', tp.x);
+      t.setAttribute('y', tp.y);
+      t.setAttribute('fill', 'var(--muted)');
+      t.setAttribute('font-size','10');
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('dominant-baseline','middle');
+      svg.appendChild(t);
+    }
+  }
+})();
+
+/** ====== DATES & ANGLES ====== **/
+const T = {
+  standby: toDate(cfg.times.standby),
+  activation: toDate(cfg.times.activation),
+  start: toDate(cfg.times.start),
+  end: toDate(cfg.times.end),
+  dayStart: toDate(cfg.dayStart),
+  dayEnd: toDate(cfg.dayEnd)
+};
+
+// compute once so all segments use identical boundaries (visually aligned)
+const A = {
+  standby:    angleFor(T.standby,   T.dayStart, T.dayEnd),
+  activation: angleFor(T.activation,T.dayStart, T.dayEnd),
+  start:      angleFor(T.start,     T.dayStart, T.dayEnd),
+  end:        angleFor(T.end,       T.dayStart, T.dayEnd)
+};
+
+// helpers
+function addSegment(a0, a1, color, title, start, end){
+  const g = document.createElementNS(svgNS,'g');
+  const seg = document.createElementNS(svgNS,'path');
+  seg.setAttribute('d', arcPath(CX,CY,R_OUT,THK,a0,a1));
+  seg.setAttribute('fill', color);
+  seg.setAttribute('fill-opacity','0.9');
+  seg.setAttribute('stroke','rgba(255,255,255,0.08)');
+  seg.setAttribute('stroke-width','1');
+  seg.style.cursor = 'pointer';
+  seg.addEventListener('mousemove', (e)=>{
+    tip.style.opacity = 1;
+    tip.style.left = e.clientX + 'px';
+    tip.style.top  = e.clientY + 'px';
+  });
+  seg.addEventListener('mouseleave', ()=> tip.style.opacity = 0 );
+
+  // midpoint label
+  const mid = (a0 + a1)/2;
+  const lp = pc(CX,CY,R_OUT - THK/2, mid);
+  const text = document.createElementNS(svgNS,'text');
+  text.textContent = title;
+  text.setAttribute('x', lp.x);
+  text.setAttribute('y', lp.y);
+  text.setAttribute('fill','#0a0a0a');
+  text.setAttribute('font-size','10');
+  text.setAttribute('font-weight','700');
+  text.setAttribute('text-anchor','middle');
+  text.setAttribute('dominant-baseline','middle');
+  const pill = document.createElementNS(svgNS,'rect');
+  const padX=6, padY=3;
+  const tw = title.length * 6.2 + padX*2;
+  const th = 14;
+  pill.setAttribute('x', lp.x - tw/2);
+  pill.setAttribute('y', lp.y - th/2);
+  pill.setAttribute('rx', 7); pill.setAttribute('ry', 7);
+  pill.setAttribute('width', tw); pill.setAttribute('height', th);
+  pill.setAttribute('fill','rgba(255,255,255,0.18)');
+  pill.setAttribute('stroke','rgba(0,0,0,0.15)');
+
+  // tooltip content
+  const mins = Math.round((end - start)/60000);
+  const hh = Math.floor(mins/60), mm = mins%60;
+  seg.addEventListener('mouseenter', ()=>{
+    tip.innerHTML = `<strong>${title}</strong><br>${fmtTime(start)} → ${fmtTime(end)}<br><span class="muted">${fmtDate(start)}</span><br><span class="muted">${hh}h ${mm}m</span>`;
+  });
+
+  g.appendChild(seg); g.appendChild(pill); g.appendChild(text);
+  svg.appendChild(g);
+  return seg;
+}
+
+/** ====== DRAW SEGMENTS (single aligned ring) ====== **/
+addSegment(A.standby,    A.activation, 'var(--standby)'  ,'Standby',    T.standby, T.activation);
+addSegment(A.activation, A.start,      'var(--activation)','Activation', T.activation, T.start);
+addSegment(A.start,      A.end,        'var(--event)'     ,'Event',      T.start, T.end);
+
+/** ====== KPIs ====== **/
+function durFmt(ms){ const m = Math.round(ms/60000); const h = Math.floor(m/60), mm = m%60; return `${h}h ${mm}m`; }
+document.getElementById('k_event').textContent = `${fmtTime(T.start)} – ${fmtTime(T.end)} (${durFmt(T.end - T.start)})`;
+document.getElementById('k_lead').textContent  = durFmt(T.start - T.activation);
+document.getElementById('k_sb').textContent    = durFmt(T.activation - T.standby);
+document.getElementById('k_day').textContent   = fmtDate(T.dayStart);
+document.getElementById('footerText').textContent = `Event #${cfg.eventId} • ${cfg.useCase} • Status: Completed`;
+</script>
+</body>
+</html>
 
