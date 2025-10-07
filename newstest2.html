@@ -67,7 +67,10 @@
 
 <script>
 /* ====== URL CONFIG ====== */
-const p = new URLSearchParams(location.search);
+// Decode QuickSight’s encoded URLs (turn %26 back into &)
+const decoded = decodeURIComponent(location.search);
+const p = new URLSearchParams(decoded);
+
 const cfg = {
   tz: p.get("tz") || "Asia/Dubai",
   offset: p.get("offset") || "+04:00", // used when building ISO from DMY
