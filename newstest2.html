@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DR Event • Radial Clock (Historic)</title>
+<title>DR Event • Radial Clock (Historic, URL-driven)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -28,7 +28,6 @@
   .dot.event{background:var(--event)}
   .clock-wrap{display:flex; align-items:center; justify-content:center; position:relative}
   svg{overflow:visible; display:block}
-  /* tooltip */
   .tip{position:absolute; pointer-events:none; background:#0b0f16; border:1px solid #283042; padding:8px 10px; border-radius:8px; font-size:12px; color:var(--text); box-shadow:0 6px 18px rgba(0,0,0,.35); opacity:0; transform:translate(-50%,-120%); transition:opacity .12s}
   .kpis{display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:10px; margin-top:8px}
   .kpi{background:#121621; border:1px solid #20283a; border-radius:12px; padding:10px}
@@ -42,14 +41,13 @@
 <div class="wrap">
   <div class="card">
     <h1>Radial Event Clock (Historic)</h1>
-    <div class="muted">Completed event phases shown as a single aligned ring on a 24-hour dial (Asia/Dubai). Hover for details.</div>
+    <div class="muted">Completed phases shown as a single aligned ring on a 24-hour dial (timezone-aware). Hover for details.</div>
     <div class="legend">
       <span class="chip"><span class="dot standby"></span>Standby → Activation</span>
       <span class="chip"><span class="dot activation"></span>Activation → Start</span>
       <span class="chip"><span class="dot event"></span>Event Window</span>
     </div>
     <div class="clock-wrap" id="clock-host" style="margin-top:8px;">
-      <!-- SVG injected here -->
       <div class="tip" id="tip"></div>
     </div>
     <div class="footer" id="footerText">—</div>
@@ -63,47 +61,95 @@
       <div class="kpi"><div class="label">Standby Lead (Standby → Activation)</div><div class="value" id="k_sb">—</div></div>
       <div class="kpi"><div class="label">Dial Day</div><div class="value" id="k_day">—</div></div>
     </div>
-    <div class="footer">Tip: The single ring guarantees perfectly aligned phase boundaries; outer ticks mark hours (00/06/12/18 labeled).</div>
+    <div class="footer">URL params: <code>eventId,useCase,eventDate,start,end,standby,activation,fmt,tz,offset</code></div>
   </div>
 </div>
 
 <script>
-/** ====== CONFIG (editable / URL-overridable) ====== **/
+/* ====== URL CONFIG ====== */
+const p = new URLSearchParams(location.search);
 const cfg = {
-  tz: "Asia/Dubai",
-  eventId: 3,
-  useCase: "Peak Demand — 24h Notice",
-  times: {
-    standby:   "2025-07-02T13:00:00+04:00",
-    activation:"2025-07-03T09:00:00+04:00",
-    start:     "2025-07-03T13:00:00+04:00",
-    end:       "2025-07-03T17:00:00+04:00"
-  },
-  // Dial day: use the calendar day of the EVENT (you can override)
-  dayStart:   "2025-07-03T00:00:00+04:00",
-  dayEnd:     "2025-07-03T23:59:59+04:00"
+  tz: p.get("tz") || "Asia/Dubai",
+  offset: p.get("offset") || "+04:00", // used when building ISO from DMY
+  eventId: p.get("eventId") || "—",
+  useCase: p.get("useCase") || "—",
+  fmt: (p.get("fmt") || "").toUpperCase(), // "DMY" or ""
+  eventDate: p.get("eventDate") || "",     // DD/MM/YYYY (if fmt=DMY)
+  standby:   p.get("standby")   || "",
+  activation:p.get("activation")|| "",
+  start:     p.get("start")     || "",
+  end:       p.get("end")       || ""
 };
 
-// URL params override: start,end,activation,standby,dayStart,dayEnd
-(function applyURLOverrides(){
-  const p = new URLSearchParams(location.search);
-  const t = cfg.times;
-  if (p.get("standby"))    t.standby = p.get("standby");
-  if (p.get("activation")) t.activation = p.get("activation");
-  if (p.get("start"))      t.start = p.get("start");
-  if (p.get("end"))        t.end = p.get("end");
-  if (p.get("dayStart"))   cfg.dayStart = p.get("dayStart");
-  if (p.get("dayEnd"))     cfg.dayEnd = p.get("dayEnd");
-})();
+/* ====== PARSERS ====== */
+// pad helper
+const z = (n)=> (n<10? "0"+n : ""+n);
 
-/** ====== TIME UTILS ====== **/
-const fmtTime = (d, opts={}) =>
-  new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, hour12:true, hour:'numeric', minute:'2-digit', ...opts }).format(d);
-const fmtDate = (d) =>
-  new Intl.DateTimeFormat("en-US", { timeZone: cfg.tz, weekday:'short', year:'numeric', month:'short', day:'2-digit' }).format(d);
-const toDate = (iso) => new Date(iso);
+// Turn "DD/MM/YYYY" -> {yyyy,mm,dd}
+function splitDMY(dmy){
+  const [dd,MM,yyyy] = dmy.split(/[\/\-\.]/).map(s=>s.trim());
+  return { yyyy, mm: z(+MM), dd: z(+dd) };
+}
+// Turn "DD/MM/YYYY HH:mm" -> ISO with fixed offset (e.g., +04:00)
+function DMY_HHMM_toISO(s, offset="+04:00", defaultTime="00:00"){
+  const [d, tRaw] = s.split(" ");
+  const { yyyy, mm, dd } = splitDMY(d);
+  const t = tRaw ? tRaw.trim() : defaultTime;
+  const [HH,MM] = t.split(":");
+  return `${yyyy}-${mm}-${dd}T${z(+HH||0)}:${z(+MM||0)}:00${offset}`;
+}
 
-/** ====== ANGLE MAP (24h dial) ====== **/
+// Flexible parse: accepts ISO or DMY (when cfg.fmt==="DMY")
+function parseFlex(s, { isDateOnly=false } = {}){
+  if(!s) return null;
+  const looksISO = /\d{4}-\d{2}-\d{2}T/.test(s) || /Z$|[+\-]\d{2}:\d{2}$/.test(s);
+  if(looksISO){
+    return new Date(s);
+  }else if(cfg.fmt === "DMY"){
+    // if only a date is provided, no time: use 00:00
+    const iso = isDateOnly ? DMY_HHMM_toISO(s, cfg.offset, "00:00")
+                           : DMY_HHMM_toISO(s, cfg.offset);
+    return new Date(iso);
+  }else{
+    // Fallback: try native (may assume local TZ)
+    return new Date(s);
+  }
+}
+
+/* ====== TIME FORMATTERS ====== */
+function fmtTimeTZ(d, opts={}){
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: cfg.tz, hour12:true, hour:'numeric', minute:'2-digit', ...opts
+  }).format(d);
+}
+function fmtDateTZ(d){
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: cfg.tz, weekday:'short', year:'numeric', month:'short', day:'2-digit'
+  }).format(d);
+}
+
+/* ====== BUILD DATES ====== */
+const T = {
+  standby:    parseFlex(cfg.standby),
+  activation: parseFlex(cfg.activation),
+  start:      parseFlex(cfg.start),
+  end:        parseFlex(cfg.end)
+};
+
+// Dial day: from eventDate if present, else from start date (in tz)
+let dialStart, dialEnd;
+if (cfg.eventDate){
+  const d0 = parseFlex(cfg.eventDate, { isDateOnly:true });
+  // construct 00:00 and 23:59:59 same day
+  dialStart = new Date(d0); dialStart.setHours(0,0,0,0);
+  dialEnd   = new Date(d0); dialEnd.setHours(23,59,59,999);
+} else {
+  const base = T.start ? new Date(T.start) : new Date();
+  dialStart = new Date(base); dialStart.setHours(0,0,0,0);
+  dialEnd   = new Date(base); dialEnd.setHours(23,59,59,999);
+}
+
+/* ====== ANGLE MAP (24h dial) ====== */
 function angleFor(d, dayStart, dayEnd){
   const span = dayEnd - dayStart;
   const clamped = Math.max(dayStart, Math.min(d, dayEnd));
@@ -111,20 +157,18 @@ function angleFor(d, dayStart, dayEnd){
   return (t * 360) - 90; // 0 at top, clockwise
 }
 
-/** ====== SVG UTILS ====== **/
+/* ====== SVG DRAW ====== */
 const svgNS = "http://www.w3.org/2000/svg";
 const host = document.getElementById('clock-host');
 const tip  = document.getElementById('tip');
 const W = 460, H = 460, CX = W/2, CY = H/2;
 const R_OUT = 180;
-const THK  = 26; // single band thickness
+const THK  = 26;
 
 function pc(cx, cy, r, deg){
   const rad = (deg * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
-
-// donut arc path at one fixed radius (single ring)
 function arcPath(cx, cy, rOuter, thickness, a0, a1){
   const rInner = rOuter - thickness;
   const p0 = pc(cx, cy, rOuter, a0), p1 = pc(cx, cy, rOuter, a1);
@@ -145,7 +189,7 @@ svg.setAttribute("width", W);
 svg.setAttribute("height", H);
 host.prepend(svg);
 
-// base ring + ticks
+// base ring + 24h ticks
 (function drawBase(){
   const base = document.createElementNS(svgNS,'circle');
   base.setAttribute('cx', CX); base.setAttribute('cy', CY);
@@ -185,26 +229,17 @@ host.prepend(svg);
   }
 })();
 
-/** ====== DATES & ANGLES ====== **/
-const T = {
-  standby: toDate(cfg.times.standby),
-  activation: toDate(cfg.times.activation),
-  start: toDate(cfg.times.start),
-  end: toDate(cfg.times.end),
-  dayStart: toDate(cfg.dayStart),
-  dayEnd: toDate(cfg.dayEnd)
-};
-
-// compute once so all segments use identical boundaries (visually aligned)
+/* ====== ANGLES (aligned ring) ====== */
 const A = {
-  standby:    angleFor(T.standby,   T.dayStart, T.dayEnd),
-  activation: angleFor(T.activation,T.dayStart, T.dayEnd),
-  start:      angleFor(T.start,     T.dayStart, T.dayEnd),
-  end:        angleFor(T.end,       T.dayStart, T.dayEnd)
+  standby:    T.standby    ? angleFor(T.standby,    dialStart, dialEnd) : null,
+  activation: T.activation ? angleFor(T.activation, dialStart, dialEnd) : null,
+  start:      T.start      ? angleFor(T.start,      dialStart, dialEnd) : null,
+  end:        T.end        ? angleFor(T.end,        dialStart, dialEnd) : null
 };
 
-// helpers
+/* ====== SEGMENTS ====== */
 function addSegment(a0, a1, color, title, start, end){
+  if(a0===null || a1===null) return;
   const g = document.createElementNS(svgNS,'g');
   const seg = document.createElementNS(svgNS,'path');
   seg.setAttribute('d', arcPath(CX,CY,R_OUT,THK,a0,a1));
@@ -220,7 +255,7 @@ function addSegment(a0, a1, color, title, start, end){
   });
   seg.addEventListener('mouseleave', ()=> tip.style.opacity = 0 );
 
-  // midpoint label
+  // label at midpoint
   const mid = (a0 + a1)/2;
   const lp = pc(CX,CY,R_OUT - THK/2, mid);
   const text = document.createElementNS(svgNS,'text');
@@ -233,8 +268,7 @@ function addSegment(a0, a1, color, title, start, end){
   text.setAttribute('text-anchor','middle');
   text.setAttribute('dominant-baseline','middle');
   const pill = document.createElementNS(svgNS,'rect');
-  const padX=6, padY=3;
-  const tw = title.length * 6.2 + padX*2;
+  const tw = title.length * 6.2 + 12;
   const th = 14;
   pill.setAttribute('x', lp.x - tw/2);
   pill.setAttribute('y', lp.y - th/2);
@@ -243,31 +277,38 @@ function addSegment(a0, a1, color, title, start, end){
   pill.setAttribute('fill','rgba(255,255,255,0.18)');
   pill.setAttribute('stroke','rgba(0,0,0,0.15)');
 
-  // tooltip content
-  const mins = Math.round((end - start)/60000);
-  const hh = Math.floor(mins/60), mm = mins%60;
-  seg.addEventListener('mouseenter', ()=>{
-    tip.innerHTML = `<strong>${title}</strong><br>${fmtTime(start)} → ${fmtTime(end)}<br><span class="muted">${fmtDate(start)}</span><br><span class="muted">${hh}h ${mm}m</span>`;
-  });
+  // tooltip
+  if(start && end){
+    const mins = Math.round((end - start)/60000);
+    const hh = Math.floor(mins/60), mm = mins%60;
+    seg.addEventListener('mouseenter', ()=>{
+      tip.innerHTML = `<strong>${title}</strong><br>${fmtTimeTZ(start)} → ${fmtTimeTZ(end)}<br><span class="muted">${fmtDateTZ(start)}</span><br><span class="muted">${hh}h ${mm}m</span>`;
+    });
+  }
 
   g.appendChild(seg); g.appendChild(pill); g.appendChild(text);
   svg.appendChild(g);
-  return seg;
 }
 
-/** ====== DRAW SEGMENTS (single aligned ring) ====== **/
-addSegment(A.standby,    A.activation, 'var(--standby)'  ,'Standby',    T.standby, T.activation);
-addSegment(A.activation, A.start,      'var(--activation)','Activation', T.activation, T.start);
-addSegment(A.start,      A.end,        'var(--event)'     ,'Event',      T.start, T.end);
+/* Draw segments (use what’s provided) */
+if (A.standby !== null && A.activation !== null)
+  addSegment(A.standby, A.activation, 'var(--standby)',   'Standby',    T.standby, T.activation);
+if (A.activation !== null && A.start !== null)
+  addSegment(A.activation, A.start,   'var(--activation)','Activation', T.activation, T.start);
+if (A.start !== null && A.end !== null)
+  addSegment(A.start, A.end,         'var(--event)',     'Event',      T.start, T.end);
 
-/** ====== KPIs ====== **/
+/* ====== KPIs & FOOTER ====== */
 function durFmt(ms){ const m = Math.round(ms/60000); const h = Math.floor(m/60), mm = m%60; return `${h}h ${mm}m`; }
-document.getElementById('k_event').textContent = `${fmtTime(T.start)} – ${fmtTime(T.end)} (${durFmt(T.end - T.start)})`;
-document.getElementById('k_lead').textContent  = durFmt(T.start - T.activation);
-document.getElementById('k_sb').textContent    = durFmt(T.activation - T.standby);
-document.getElementById('k_day').textContent   = fmtDate(T.dayStart);
-document.getElementById('footerText').textContent = `Event #${cfg.eventId} • ${cfg.useCase} • Status: Completed`;
+const kEvent = document.getElementById('k_event');
+const kLead  = document.getElementById('k_lead');
+const kSB    = document.getElementById('k_sb');
+const kDay   = document.getElementById('k_day');
+kEvent.textContent = (T.start && T.end) ? `${fmtTimeTZ(T.start)} – ${fmtTimeTZ(T.end)} (${durFmt(T.end - T.start)})` : '—';
+kLead.textContent  = (T.activation && T.start) ? durFmt(T.start - T.activation) : '—';
+kSB.textContent    = (T.standby && T.activation) ? durFmt(T.activation - T.standby) : '—';
+kDay.textContent   = fmtDateTZ(dialStart);
+document.getElementById('footerText').textContent = `Event #${cfg.eventId} • ${cfg.useCase} • TZ: ${cfg.tz}`;
 </script>
 </body>
 </html>
-
