@@ -222,6 +222,16 @@ const W = 460, H = 460, CX = W/2, CY = H/2;
 const R_OUT = 180;
 const THK  = 26;
 
+// ---- Tooltip positioning helper (relative to #clock-host) ----
+function placeTipRelativeToHost(evt){
+  const hostEl = document.getElementById('clock-host');   // the container that also holds .tip
+  const r = hostEl.getBoundingClientRect();
+  const x = evt.clientX - r.left; // relative X inside host
+  const y = evt.clientY - r.top;  // relative Y inside host
+  tip.style.left = x + 'px';
+  tip.style.top  = y + 'px';
+}
+
 function pc(cx, cy, r, deg){
   const rad = (deg * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
