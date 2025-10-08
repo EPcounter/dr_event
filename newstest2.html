@@ -16,8 +16,11 @@ body{
   margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif;
   padding:24px;              /* no flex centering */
 }
-.wrap{max-width:700px; width:100%; display:grid; gap:16px; grid-template-columns: 260px 1fr;}
+.wrap{max-width:700px; width:100%; display:grid; gap:16px;   grid-template-columns: minmax(220px,260px) minmax(280px,1fr);}
   .card{background:var(--panel); border:1px solid #1e2430; border-radius:14px; padding:16px;}
+  .card{ 
+  min-width:0;   /* lets grid shrink instead of forcing wrap */
+}
   h1{font-size:18px; margin:0 0 8px}
   .muted{color:var(--muted); font-size:12px}
   .legend{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px}
