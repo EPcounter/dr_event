@@ -316,11 +316,11 @@ function addSegment(a0, a1, color, title, start, end){
   seg.setAttribute('stroke-width','1');
   seg.style.cursor = 'pointer';
   seg.addEventListener('mousemove', (e)=>{
-    tip.style.opacity = 1;
-    tip.style.left = e.clientX + 'px';
-    tip.style.top  = e.clientY + 'px';
-  });
-  seg.addEventListener('mouseleave', ()=> tip.style.opacity = 0 );
+  tip.style.opacity = 1;
+  placeTipRelativeToHost(e);
+});
+seg.addEventListener('mouseleave', ()=> tip.style.opacity = 0 );
+
 
   // label at midpoint
   const mid = (a0 + a1)/2;
@@ -345,13 +345,15 @@ function addSegment(a0, a1, color, title, start, end){
   pill.setAttribute('stroke','rgba(0,0,0,0.15)');
 
   // tooltip
-  if(start && end){
-    const mins = Math.round((end - start)/60000);
-    const hh = Math.floor(mins/60), mm = mins%60;
-    seg.addEventListener('mouseenter', ()=>{
-      tip.innerHTML = `<strong>${title}</strong><br>${fmtTimeTZ(start)} → ${fmtTimeTZ(end)}<br><span class="muted">${fmtDateTZ(start)}</span><br><span class="muted">${hh}h ${mm}m</span>`;
-    });
-  }
+if(start && end){
+  const mins = Math.round((end - start)/60000);
+  const hh = Math.floor(mins/60), mm = mins%60;
+  seg.addEventListener('mouseenter', (e)=>{
+    tip.style.opacity = 1;
+    placeTipRelativeToHost(e);
+    tip.innerHTML = `<strong>${title}</strong><br>${fmtTimeTZ(start)} → ${fmtTimeTZ(end)}<br><span class="muted">${fmtDateTZ(start)}</span><br><span class="muted">${hh}h ${mm}m</span>`;
+  });
+}
 
   g.appendChild(seg); g.appendChild(pill); g.appendChild(text);
   svg.appendChild(g);
