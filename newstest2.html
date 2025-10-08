@@ -16,7 +16,7 @@
     margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif;
     display:flex; align-items:center; justify-content:center; padding:24px;
   }
-  .wrap{max-width:980px; width:100%; display:grid; gap:16px; grid-template-columns: 520px 1fr;}
+.wrap{max-width:700px; width:100%; display:grid; gap:16px; grid-template-columns: 260px 1fr;}
   .card{background:var(--panel); border:1px solid #1e2430; border-radius:14px; padding:16px;}
   h1{font-size:18px; margin:0 0 8px}
   .muted{color:var(--muted); font-size:12px}
@@ -219,9 +219,10 @@ function angleFor(d, dayStart, dayEnd){
 const svgNS = "http://www.w3.org/2000/svg";
 const host = document.getElementById('clock-host');
 const tip  = document.getElementById('tip');
-const W = 460, H = 460, CX = W/2, CY = H/2;
-const R_OUT = 180;
-const THK  = 26;
+// --- Smaller clock (50% of original) ---
+const W = 230, H = 230, CX = W/2, CY = H/2;
+const R_OUT = 90;    // outer radius was 180
+const THK  = 13;     // ring thickness was 26
 
 // ---- Tooltip positioning helper (relative to #clock-host) ----
 function placeTipRelativeToHost(evt){
@@ -271,7 +272,7 @@ host.prepend(svg);
     const angle = (h/24)*360 - 90;
     const r1 = R_OUT + 10;
     const major = (h%6===0);
-    const r2 = r1 + (major ? 14 : 8);
+const r2 = r1 + (major ? 7 : 4);
     const p1 = pc(CX,CY,r1,angle);
     const p2 = pc(CX,CY,r2,angle);
     const line = document.createElementNS(svgNS,'line');
