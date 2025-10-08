@@ -12,10 +12,10 @@
     --tick:#2b3242; --ring:#222735;
   }
   html,body{height:100%}
-  body{
-    margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif;
-    display:flex; align-items:center; justify-content:center; padding:24px;
-  }
+body{
+  margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif;
+  padding:24px;              /* no flex centering */
+}
 .wrap{max-width:700px; width:100%; display:grid; gap:16px; grid-template-columns: 260px 1fr;}
   .card{background:var(--panel); border:1px solid #1e2430; border-radius:14px; padding:16px;}
   h1{font-size:18px; margin:0 0 8px}
@@ -43,7 +43,7 @@
 <body>
 <div class="wrap">
   <div class="card">
-    <h1>Radial Event Clock (Historic)</h1>
+    <h1 id="pageTitle">Radial Event Clock (Historic)</h1>
     <div class="muted">Completed phases shown as a single aligned ring on a 24-hour dial (timezone-aware). Hover for details.</div>
     <div class="legend">
       <span class="chip"><span class="dot standby"></span>Standby → Activation</span>
@@ -121,6 +121,9 @@ const cfg = {
   end:       p.get("end")       || ""
 };
 
+  // Set the main title to "Event #<id> • <Use case>"
+const pageTitle = document.getElementById('pageTitle');
+if (pageTitle) pageTitle.textContent = `Event #${cfg.eventId} • ${cfg.useCase}`;
 
 
 
@@ -379,7 +382,7 @@ kEvent.textContent = (T.start && T.end) ? `${fmtTimeTZ(T.start)} – ${fmtTimeTZ
 kLead.textContent  = (T.activation && T.start) ? durFmt(T.start - T.activation) : '—';
 kSB.textContent    = (T.standby && T.activation) ? durFmt(T.activation - T.standby) : '—';
 kDay.textContent   = fmtDateTZ(dialStart);
-document.getElementById('footerText').textContent = `Event #${cfg.eventId} • ${cfg.useCase} • TZ: ${cfg.tz}`;
+document.getElementById('footerText').textContent = 'Radial Event Clock (Historic)';
 </script>
 </body>
 </html>
