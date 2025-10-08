@@ -11,12 +11,11 @@
     --standby:#f5d76e; --activation:#ff9f43; --event:#ff5252;
     --tick:#2b3242; --ring:#222735;
   }
-  html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;   /* block horizontal scroll */
-  overflow-y: hidden;   /* stop unnecessary vertical scroll */
+
+  html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif;
+  padding:24px;              /* no flex centering */
 }
  
 .wrap{max-width:700px; width:100%; display:grid; gap:16px;   grid-template-columns: minmax(220px,260px) minmax(280px,1fr);}
