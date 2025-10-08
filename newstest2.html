@@ -16,6 +16,13 @@ body{
   margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif;
   padding:24px;              /* no flex centering */
 }
+  html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;   /* block horizontal scroll */
+  overflow-y: hidden;   /* stop unnecessary vertical scroll */
+}
 .wrap{max-width:700px; width:100%; display:grid; gap:16px;   grid-template-columns: minmax(220px,260px) minmax(280px,1fr);}
   .card{background:var(--panel); border:1px solid #1e2430; border-radius:14px; padding:16px;}
   .card{ 
