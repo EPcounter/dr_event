@@ -66,25 +66,39 @@
 </div>
 
 <script>
-/* ====== URL CONFIG (robust for QuickSight) ====== */
+/* ====== URL CONFIG (extra-robust for QuickSight & double-encoding) ====== */
+function multiDecode(s) {
+  // decode repeatedly in case we get %2526, etc.
+  let out = s || "";
+  for (let i = 0; i < 3; i++) {
+    try {
+      const dec = decodeURIComponent(out);
+      if (dec === out) break;
+      out = dec;
+    } catch {
+      break;
+    }
+  }
+  return out;
+}
+
 function getQSParams() {
-  // 1) Start with the normal search
+  // 1) start with the normal search
   let raw = window.location.search;
 
-  // 2) If QS stripped it, pull query from the full href after ".html"
+  // 2) if empty, try to pull query after ".html" in the href (QS quirk)
   if (!raw || raw === "?") {
-    const hrefDec = decodeURIComponent(window.location.href);
+    const hrefDec = multiDecode(window.location.href);
     const m = hrefDec.match(/\.html(\?[^#]*)/i);
     if (m) raw = m[1];
   }
 
-  // 3) Normalize: remove leading ?, fix &amp;, then decode % (incl. %26)
+  // 3) normalize: strip "?", unescape any "&amp;"
   if (!raw) raw = "";
-  let normalized = raw.replace(/^\?/, "")
-                      .replace(/&amp;/g, "&");
-  // decode once (turns %26 back into &)
-  normalized = decodeURIComponent("?" + normalized).slice(1);
+  let normalized = raw.replace(/^\?/, "").replace(/&amp;/g, "&");
 
+  // 4) decode % encodings (turn %26 into &) and build params
+  normalized = multiDecode("?" + normalized).slice(1);
   return new URLSearchParams(normalized);
 }
 
@@ -102,6 +116,9 @@ const cfg = {
   start:     p.get("start")     || "",
   end:       p.get("end")       || ""
 };
+
+
+
 
 /* ====== PARSERS ====== */
 // pad helper
