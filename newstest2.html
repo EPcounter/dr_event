@@ -66,18 +66,37 @@
 </div>
 
 <script>
-/* ====== URL CONFIG ====== */
-// Decode QuickSight’s encoded URLs (turn %26 back into &)
-const decoded = decodeURIComponent(location.search);
-const p = new URLSearchParams(decoded);
+/* ====== URL CONFIG (robust for QuickSight) ====== */
+function getQSParams() {
+  // 1) Start with the normal search
+  let raw = window.location.search;
+
+  // 2) If QS stripped it, pull query from the full href after ".html"
+  if (!raw || raw === "?") {
+    const hrefDec = decodeURIComponent(window.location.href);
+    const m = hrefDec.match(/\.html(\?[^#]*)/i);
+    if (m) raw = m[1];
+  }
+
+  // 3) Normalize: remove leading ?, fix &amp;, then decode % (incl. %26)
+  if (!raw) raw = "";
+  let normalized = raw.replace(/^\?/, "")
+                      .replace(/&amp;/g, "&");
+  // decode once (turns %26 back into &)
+  normalized = decodeURIComponent("?" + normalized).slice(1);
+
+  return new URLSearchParams(normalized);
+}
+
+const p = getQSParams();
 
 const cfg = {
   tz: p.get("tz") || "Asia/Dubai",
-  offset: p.get("offset") || "+04:00", // used when building ISO from DMY
+  offset: p.get("offset") || "+04:00",
   eventId: p.get("eventId") || "—",
   useCase: p.get("useCase") || "—",
   fmt: (p.get("fmt") || "").toUpperCase(), // "DMY" or ""
-  eventDate: p.get("eventDate") || "",     // DD/MM/YYYY (if fmt=DMY)
+  eventDate: p.get("eventDate") || "",
   standby:   p.get("standby")   || "",
   activation:p.get("activation")|| "",
   start:     p.get("start")     || "",
